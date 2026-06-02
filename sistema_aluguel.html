@@ -1156,15 +1156,26 @@ function navMes(dir) {
 }
 
 function getFixosGlobais() {
-  // Collect all fixed items from all months of this contract
+  // Busca lançamentos fixos de QUALQUER mês deste contrato
   const prefix = S.idx + '_';
   const fixos = [];
   const seen = new Set();
-  Object.keys(S.lancs).filter(k=>k.startsWith(prefix)).forEach(k => {
+  Object.keys(S.lancs).filter(k => k.startsWith(prefix)).forEach(k => {
     const items = S.lancs[k].items || [];
-    items.filter(it=>it.fixo).forEach(it => {
-      const key = it.hist + '|' + it.tipo + '|' + it.dc_prop + '|' + it.dc_inq;
-      if (!seen.has(key)) { seen.add(key); fixos.push({...it, pago:'nao', venc:''}); }
+    items.filter(it => it.fixo === true && it.tipo !== 'Aluguel').forEach(it => {
+      const key = it.hist + '||' + it.tipo + '||' + it.dc_prop + '||' + it.dc_inq;
+      if (!seen.has(key)) {
+        seen.add(key);
+        fixos.push({
+          hist: it.hist,
+          tipo: it.tipo,
+          valor: it.valor,
+          dc_prop: it.dc_prop,
+          dc_inq: it.dc_inq,
+          pago: 'nao',
+          fixo: true,
+        });
+      }
     });
   });
   return fixos;
@@ -1173,17 +1184,17 @@ function getFixosGlobais() {
 function autoPopularMes(k) {
   ensLKey(k);
   const d = S.lancs[k];
-  if (d._autoPopulado) return; // já foi populado
-
   const c = C();
   const alug = getAluguelVigente(c);
   const venc = c.cont_venc || '';
-  const [ano, mes] = k.split('_')[1].split('-').map(Number);
+  const partes = k.split('_')[1].split('-');
+  const ano = parseInt(partes[0]);
+  const mes = parseInt(partes[1]);
   const dataVenc = venc ? `${ano}-${String(mes).padStart(2,'0')}-${String(venc).padStart(2,'0')}` : '';
 
   if (!d.items) d.items = [];
 
-  // Add aluguel if not already there
+  // 1. Aluguel automático
   const temAluguel = d.items.some(it => it.tipo === 'Aluguel');
   if (!temAluguel && alug > 0) {
     d.items.unshift({
@@ -1199,16 +1210,18 @@ function autoPopularMes(k) {
     });
   }
 
-  // Add fixed items from other months
+  // 2. Despesas fixas
   const fixos = getFixosGlobais();
   fixos.forEach(fix => {
     const jatem = d.items.some(it => it.hist === fix.hist && it.tipo === fix.tipo);
     if (!jatem) {
-      d.items.push({...fix, pago:'nao', venc: dataVenc, _auto: true});
+      d.items.push({
+        ...fix,
+        venc: dataVenc,
+        _auto: true,
+      });
     }
   });
-
-  d._autoPopulado = true;
 }
 
 function renderLancTable() {
@@ -1225,7 +1238,7 @@ function renderLancTable() {
     (d.cProp||[]).forEach(it => d.items.push({hist:it.desc||it.cat,tipo:it.cat,valor:parseFloat(it.val)||0,venc:it.ref||'',pago:'nao',dc_prop:'C',dc_inq:''}));
   }
 
-  // Auto-populate aluguel and fixed items
+  // Auto-populate aluguel and fixed items (runs every time)
   autoPopularMes(k);
 
   const items = S.lancs[k].items || [];
