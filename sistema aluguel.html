@@ -181,6 +181,56 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
 .user-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3);}
 #userEmail{font-weight:500;color:var(--text2);}
 
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: column;
+  }
+  .sidebar.hidden { display: none; }
+  .main { margin-left: 0; }
+  .topbar { padding: 0 16px; }
+  .content { padding: 16px; }
+  .g2,.g3,.g4 { grid-template-columns: 1fr; }
+  .metrics-strip { flex-wrap: wrap; }
+  .metrics-strip .metric { min-width: calc(50% - 5px); }
+  .dl-cols { grid-template-columns: 80px 1fr 80px !important; }
+  .dl-head .dl-prop, .dl-head .dl-inq, .dl-head .dl-alug { display: none; }
+  .dl-row .dl-sec:first-of-type, .dl-row .dl-sec:last-of-type, .dl-row .dl-mo { display: none; }
+  .tab-bar { gap: 0; }
+  .tab-btn { padding: 10px 8px; font-size: 11px; }
+  .exp-row { grid-template-columns: 1fr 1fr !important; gap: 6px; }
+  .exp-row button { grid-column: span 2; }
+  .field-row, .field-row-3, .g2, .g3 { grid-template-columns: 1fr !important; }
+  #menuToggle { display: flex !important; }
+  .sb-bottom { padding: 8px 14px; }
+  .app { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    height: 100vh;
+    width: 260px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0 !important; }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+  .overlay.open { display: block; }
+}
+@media (min-width: 769px) {
+  #menuToggle { display: none !important; }
+  .overlay { display: none !important; }
+}
+
 @media print{.sidebar,.topbar,.no-print{display:none!important;}.main{margin-left:0;}.content{padding:0;}body{background:#fff;}}
 </style>
 </head>
@@ -209,6 +259,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
 <div id="appWrap" style="display:none;">
 <div class="app">
 
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sb-logo"><h1>Gestão de Aluguéis</h1><p>Administração de contratos</p></div>
@@ -226,6 +277,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
 <div class="main">
   <div class="topbar">
     <div class="tb-left">
+      <button id="menuToggle" onclick="toggleMenu()" style="display:none;padding:6px 10px;border-radius:var(--rsm);border:1px solid var(--border);background:transparent;cursor:pointer;font-size:18px;color:var(--text2);">☰</button>
       <button class="tb-back" id="tbBack" onclick="showPage('dashboard')">
         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
         Contratos
@@ -921,6 +973,25 @@ function closeMo(id){document.getElementById(id).classList.remove('open');}
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
+
+// ── Mobile Menu ───────────────────────────────────────────
+function toggleMenu() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+function closeMenu() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+// Close menu when nav item clicked on mobile
+document.querySelectorAll('.sb-item, .btn-new').forEach(el => {
+  el.addEventListener('click', () => {
+    if (window.innerWidth <= 768) closeMenu();
+  });
+});
+
 function populateYears(){
   const cur=new Date().getFullYear();
   ['lanc_ano','ei_ano','ep_ano','ir_ano','fin_ano','rec_ano'].forEach(id=>{
