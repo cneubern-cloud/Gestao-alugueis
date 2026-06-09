@@ -260,7 +260,32 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
 .pago-sim{color:var(--green);font-size:11px;font-weight:600;}
 .pago-nao{color:var(--text3);font-size:11px;}
 
-@media print{.sidebar,.topbar,.no-print{display:none!important;}.main{margin-left:0;}.content{padding:0;}body{background:#fff;}}
+@media print{
+  @page{margin:1.5cm 2cm 1.5cm 2cm;}
+  *{box-sizing:border-box!important;}
+  .sidebar,.topbar,#mainTopbar,.no-print,.tab-bar,#tabBar,.tb-back,.tb-left,.tb-title,.tb-sub{display:none!important;}
+  .main{margin-left:0!important;width:100%!important;}
+  .content{padding:0!important;margin:0!important;width:100%!important;}
+  body{background:#fff!important;margin:0!important;padding:0!important;}
+  .app{display:block!important;}
+  .tab-pane{display:none!important;}
+  .tab-pane.on{display:block!important;width:100%!important;}
+  .card{box-shadow:none!important;border:1px solid #ddd!important;border-radius:4px!important;margin-bottom:8px!important;}
+  .ext-head{
+    background:#1a4a6b!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    color:#fff!important;
+    border-radius:4px 4px 0 0!important;
+    padding:16px 20px!important;
+  }
+  .ext-head h2,.ext-head *{color:#fff!important;}
+  .ext-body{border:1px solid #ddd!important;border-top:none!important;border-radius:0 0 4px 4px!important;}
+  .ext-row{padding:8px 16px!important;font-size:12px!important;}
+  .ext-row.hd{background:#f0f0f0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .ext-row.tot{background:#f5f5f5!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-weight:600!important;}
+  .ext-val{font-family:monospace!important;}
+}
 </style>
 </head>
 <body>
@@ -304,7 +329,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
 
 <!-- MAIN -->
 <div class="main">
-  <div class="topbar">
+  <div class="topbar" id="mainTopbar">
     <div class="tb-left">
       <button id="menuToggle" onclick="toggleMenu()" style="display:none;padding:6px 10px;border-radius:var(--rsm);border:1px solid var(--border);background:transparent;cursor:pointer;font-size:18px;color:var(--text2);">☰</button>
       <button class="tb-back" id="tbBack" onclick="showPage('dashboard')">
@@ -688,6 +713,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
             <div class="field" style="margin:0;min-width:140px;"><label>Mês</label><select id="ei_mes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
             <div class="field" style="margin:0;min-width:90px;"><label>Ano</label><select id="ei_ano"></select></div>
             <button class="btn btn-p btn-sm" onclick="renderExtInq()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirExtrato('extInqOut')">🖨️ Imprimir</button>
           </div>
         </div>
         <div id="extInqOut"></div>
@@ -700,6 +726,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
             <div class="field" style="margin:0;min-width:140px;"><label>Mês</label><select id="ep_mes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
             <div class="field" style="margin:0;min-width:90px;"><label>Ano</label><select id="ep_ano"></select></div>
             <button class="btn btn-p btn-sm" onclick="renderExtProp()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirExtrato('extPropOut')">🖨️ Imprimir</button>
           </div>
         </div>
         <div id="extPropOut"></div>
@@ -757,6 +784,7 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
             <div class="field"><label>Forma de pagamento</label><select id="rec_forma"><option>Transferência bancária</option><option>PIX</option><option>Depósito</option><option>Dinheiro</option><option>Cheque</option></select></div>
           </div>
           <button class="btn btn-p btn-sm" onclick="renderRecibo()">Gerar recibo</button>
+          <button class="btn btn-sm" onclick="imprimirExtrato('reciboOut')">🖨️ Imprimir</button>
         </div>
         <div id="reciboOut"></div>
       </div>
@@ -804,7 +832,13 @@ let S;
 try { S = JSON.parse(localStorage.getItem('aluguel_v4')) || newState(); } catch(e) { S = newState(); }
 function newState() { return {contratos:[], idx:null, lancs:{}}; }
 function save() { localStorage.setItem('aluguel_v4', JSON.stringify(S)); }
-function C() { return S.idx !== null ? S.contratos[S.idx] : {}; }
+function C() {
+  if (S.idx === null) return {};
+  const c = S.contratos[S.idx];
+  // Ensure prop/inq fields are always synced
+  if (c && (c._props || c.prop_nome)) syncFromContrato(c);
+  return c;
+}
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -923,6 +957,7 @@ function abrirContrato(i) {
   document.getElementById('tbTitle').textContent=cod(i);
   toggleGarantiaValor();
   preencherCamposImovel(S.contratos[i]);
+  syncFromContrato(S.contratos[i]);
   // migrate legacy fields to _props/_inqs if needed
   if (!S.contratos[i]._props) { const c=S.contratos[i]; S.contratos[i]._props=[{...novaParte('prop',0),nome:c.prop_nome||'',cpf:c.prop_cpf||'',email:c.prop_email||'',tel:c.prop_tel||'',banco:c.prop_banco||''}]; } if (!S.contratos[i]._inqs) { const c=S.contratos[i]; S.contratos[i]._inqs=[{...novaParte('inq',0),nome:c.inq_nome||'',cpf:c.inq_cpf||'',email:c.inq_email||'',tel:c.inq_tel||''  }]; }
   document.getElementById('tbSub').textContent=(c.imovel_end||'')+(c.prop_nome?' — '+c.prop_nome:'');
@@ -1478,6 +1513,52 @@ function renderIR(){
   else meses.forEach(r=>{h+=`<tr><td>${MESES[r.m-1]}</td><td class="r mo">${fmt(r.alug)}</td><td class="r mo">${fmt(r.abat)}</td><td class="r mo">${fmt(r.base)}</td><td class="r"><span class="tag tag-rd">${(r.aliq*100).toFixed(1)}%</span></td><td class="r mo" style="color:var(--red);font-weight:500;">${fmt(r.imp)}</td></tr>`;});
   h+=`</tbody><tfoot><tr><td>Total</td><td class="r mo">${fmt(totB)}</td><td class="r mo">${fmt(totA)}</td><td class="r mo">${fmt(totL)}</td><td></td><td class="r mo" style="color:var(--red);">${fmt(totI)}</td></tr></tfoot>
   </table></div><p style="font-size:11px;color:var(--text3);margin-top:10px;">Tabela progressiva 2025: até R$ 2.259,20 isento · 7,5% · 15% · 22,5% · acima R$ 4.664,68 = 27,5%. Vencimento carnê-leão: último dia útil do mês seguinte.</p></div>`;
+
+  // ── Informe de pagamentos do inquilino ──
+  let totPagoInq = 0;
+  let linhasInq = '';
+  for(let m=1;m<=12;m++){
+    const k2=lKey(m,ano); const d2=S.lancs[k2];
+    if(!d2||!d2.items||!d2.items.length) continue;
+    const debInq2 = d2.items.filter(it=>it.dc_inq==='D'||it.dc_inq==='D/C');
+    const credInq2 = d2.items.filter(it=>it.dc_inq==='C');
+    const totMes = debInq2.reduce((s,it)=>s+(it.valor||0),0) - credInq2.reduce((s,it)=>s+(it.valor||0),0);
+    totPagoInq += totMes;
+    linhasInq += `<tr>
+      <td>${MESES[m-1]}</td>
+      ${debInq2.map(it=>`<td class="r mo">${it.tipo==='Aluguel'?fmt(it.valor||0):'—'}</td>`).join('')}
+      <td class="r mo">${fmt(debInq2.filter(it=>it.tipo!=='Aluguel').reduce((s,it)=>s+(it.valor||0),0))}</td>
+      <td class="r mo" style="color:var(--green);font-weight:500;">${fmt(totMes)}</td>
+    </tr>`;
+  }
+
+  h += `<div class="card" style="margin-top:14px;">
+    <div class="card-title">Informe de Pagamentos — Inquilino</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.8;">
+      <strong>${c.inq_nome||'—'}</strong> · CPF: ${c.inq_cpf||'—'}<br>
+      Imóvel: ${c.imovel_end||'—'} — ${c.imovel_cidade||''}${c.imovel_uf?'/'+c.imovel_uf:''}<br>
+      Ano-base: <strong>${ano}</strong>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Mês</th>
+        <th class="r">Aluguel</th>
+        <th class="r">Encargos</th>
+        <th class="r">Total pago</th>
+      </tr></thead>
+      <tbody>${linhasInq||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px;">Nenhum lançamento em '+ano+'.</td></tr>'}</tbody>
+      <tfoot><tr>
+        <td>Total anual</td>
+        <td></td>
+        <td></td>
+        <td class="r mo" style="color:var(--green);">${fmt(totPagoInq)}</td>
+      </tr></tfoot>
+    </table></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;">
+      Valores pagos pelo inquilino no ano-base ${ano} referentes à locação do imóvel.
+    </p>
+  </div>`;
+
   document.getElementById('irOut').innerHTML=h;
 }
 
@@ -1613,6 +1694,65 @@ function closeMo(id){document.getElementById(id).classList.remove('open');}
 // INIT
 // ═══════════════════════════════════════════════════════════
 
+
+// ── Impressão de extratos ──────────────────────────────────
+function imprimirExtrato(divId) {
+  const conteudo = document.getElementById(divId);
+  if (!conteudo || !conteudo.innerHTML.trim()) {
+    alert('Clique em "Gerar" primeiro para visualizar o extrato.');
+    return;
+  }
+  const win = window.open('', '_blank', 'width=800,height=600');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Extrato</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:#fff;padding:1.5cm 2cm;font-size:13px;color:#1a1917;}
+  /* Extrato */
+  .ext-head{background:#1a4a6b;color:#fff;border-radius:8px 8px 0 0;padding:20px 24px;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:0;}
+  .ext-head h2{font-size:16px;font-weight:600;}
+  .ext-head p{font-size:11px;opacity:.75;margin-top:3px;}
+  .ext-head *{color:#fff;}
+  .ext-body{border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;margin-bottom:16px;}
+  .ext-row{display:flex;justify-content:space-between;align-items:center;padding:9px 20px;border-bottom:1px solid #eee;font-size:13px;}
+  .ext-row:last-child{border-bottom:none;}
+  .ext-row.tot{background:#f5f5f5;font-weight:600;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .ext-row.cr{color:#2d6a2d;}
+  .ext-row.db{color:#8b2020;}
+  .ext-row.hd{background:#f5f5f5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .ext-val{font-family:'DM Mono',monospace;font-weight:500;}
+  /* Cards e tabelas do IR */
+  .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:14px;}
+  .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#999;margin-bottom:10px;}
+  .metrics-strip,.dash-metrics{display:flex;gap:10px;margin-bottom:14px;}
+  .metric{flex:1;border:1px solid #ddd;border-radius:8px;padding:12px 14px;}
+  .m-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:4px;}
+  .m-val{font-size:18px;font-weight:600;font-family:'DM Mono',monospace;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;border-bottom:1px solid #ddd;background:#f5f5f5;}
+  th.r,td.r{text-align:right;}
+  tbody td{padding:9px 10px;border-bottom:1px solid #eee;}
+  tbody td.mo{font-family:'DM Mono',monospace;}
+  tfoot td{padding:8px 10px;font-weight:600;border-top:2px solid #ddd;}
+  .tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500;}
+  .tag-rd{background:#fbeaea;color:#8b2020;}
+  p{font-size:11px;color:#999;margin-top:8px;line-height:1.5;}
+  @media print{@page{margin:1.5cm 2cm;}}
+</style>
+</head>
+<body>
+${conteudo.innerHTML}
+</body>
+</html>`);
+  win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
+}
+
 // ── Mobile Menu ───────────────────────────────────────────
 
 function toggleGarantiaValor() {
@@ -1741,18 +1881,47 @@ function updParte(tipo, i, field, val) {
 }
 
 function syncHiddenFields(c) {
-  // Sync first prop/inq to hidden fields for extrato/recibo compatibility
-  const p = c._props && c._props[0] ? c._props[0] : {};
-  const inq = c._inqs && c._inqs[0] ? c._inqs[0] : {};
+  // Sync first prop/inq to hidden fields and to contrato object
+  const p   = c._props && c._props[0] ? c._props[0] : {};
+  const inq = c._inqs  && c._inqs[0]  ? c._inqs[0]  : {};
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
   set('prop_nome', p.nome); set('prop_cpf', p.cpf);
   set('prop_email', p.email); set('prop_tel', p.tel||p.cel);
   set('prop_banco', p.banco);
   set('inq_nome', inq.nome); set('inq_cpf', inq.cpf);
   set('inq_email', inq.email); set('inq_tel', inq.tel||inq.cel);
-  // Also update contrato object for extrato use
-  c.prop_nome=p.nome||''; c.prop_cpf=p.cpf||''; c.prop_banco=p.banco||'';
-  c.inq_nome=inq.nome||''; c.inq_cpf=inq.cpf||'';
+  // Always update contrato fields for extrato/recibo/IR use
+  c.prop_nome  = p.nome   || c.prop_nome  || '';
+  c.prop_cpf   = p.cpf    || c.prop_cpf   || '';
+  c.prop_banco = p.banco  || c.prop_banco || '';
+  c.prop_tel   = p.tel    || p.cel || c.prop_tel || '';
+  c.inq_nome   = inq.nome || c.inq_nome   || '';
+  c.inq_cpf    = inq.cpf  || c.inq_cpf    || '';
+  c.inq_tel    = inq.tel  || inq.cel || c.inq_tel || '';
+}
+
+// Call syncHiddenFields when loading contract to ensure fields are populated
+function syncFromContrato(c) {
+  // If _props/_inqs not set yet, use legacy fields
+  if (!c._props || !c._props[0] || !c._props[0].nome) {
+    if (c.prop_nome) {
+      c._props = [{
+        nome: c.prop_nome, cpf: c.prop_cpf||'', email: c.prop_email||'',
+        tel: c.prop_tel||'', cel:'', banco: c.prop_banco||'',
+        rg:'', nascimento:'', estado_civil:'', cep:'', endereco:'', cidade:'', uf:''
+      }];
+    }
+  }
+  if (!c._inqs || !c._inqs[0] || !c._inqs[0].nome) {
+    if (c.inq_nome) {
+      c._inqs = [{
+        nome: c.inq_nome, cpf: c.inq_cpf||'', email: c.inq_email||'',
+        tel: c.inq_tel||'', cel:'',
+        rg:'', nascimento:'', estado_civil:'', cep:'', endereco:'', cidade:'', uf:''
+      }];
+    }
+  }
+  syncHiddenFields(c);
 }
 
 function salvarPartes() {
