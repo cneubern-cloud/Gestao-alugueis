@@ -735,12 +735,16 @@ tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
       <!-- ABA 7: INFORME IR -->
       <div class="tab-pane" id="pane7">
         <div class="card no-print">
-          <div style="display:flex;gap:8px;align-items:flex-end;">
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
             <div class="field" style="margin:0;min-width:120px;"><label>Ano-base</label><select id="ir_ano"></select></div>
-            <button class="btn btn-p btn-sm" onclick="renderIR()">Gerar informe</button>
+            <button class="btn btn-sm" id="irTabProp" onclick="showIRTab('prop')" style="background:var(--accent);color:#fff;border-color:var(--accent);">&#127968; Propriet&#225;ria</button>
+            <button class="btn btn-sm" id="irTabInq" onclick="showIRTab('inq')">&#128100; Inqu&#237;lino</button>
+            <button class="btn btn-p btn-sm" onclick="gerarIRAtivo()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirIRAtivo()">&#128424; Imprimir</button>
           </div>
         </div>
-        <div id="irOut"></div>
+        <div id="irPropOut"></div>
+        <div id="irInqOut" style="display:none;"></div>
       </div>
 
       <!-- ABA 8: FINANCEIRO -->
@@ -1559,7 +1563,7 @@ function renderIR(){
     </p>
   </div>`;
 
-  document.getElementById('irOut').innerHTML=h;
+  document.getElementById('irPropOut').innerHTML=h;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1747,6 +1751,65 @@ function imprimirExtrato(divId) {
 </head>
 <body>
 ${conteudo.innerHTML}
+
+<script>
+var irTabAtivo='prop';
+function showIRTab(tab){
+  irTabAtivo=tab;
+  var bP=document.getElementById('irTabProp'),bI=document.getElementById('irTabInq');
+  if(bP){bP.style.background=tab==='prop'?'var(--accent)':'';bP.style.color=tab==='prop'?'#fff':'var(--text)';bP.style.borderColor=tab==='prop'?'var(--accent)':'var(--border2)';}
+  if(bI){bI.style.background=tab==='inq'?'var(--accent)':'';bI.style.color=tab==='inq'?'#fff':'var(--text)';bI.style.borderColor=tab==='inq'?'var(--accent)':'var(--border2)';}
+  var oP=document.getElementById('irPropOut'),oI=document.getElementById('irInqOut');
+  if(oP)oP.style.display=tab==='prop'?'block':'none';
+  if(oI)oI.style.display=tab==='inq'?'block':'none';
+}
+function gerarIRAtivo(){if(irTabAtivo==='prop')renderIR();else renderIRInq();}
+function imprimirIRAtivo(){imprimirExtrato(irTabAtivo==='prop'?'irPropOut':'irInqOut');}
+function renderIRInq(){
+  var ano=+document.getElementById('ir_ano').value;
+  var c=C();
+  var totPago=0,totAlug=0,totEnc=0,linhas='';
+  for(var m=1;m<=12;m++){
+    var k2=lKey(m,ano),d2=S.lancs[k2];
+    if(!d2||!d2.items||!d2.items.length)continue;
+    var debInq=d2.items.filter(function(it){return it.dc_inq==='D'||it.dc_inq==='D/C';});
+    var credInq=d2.items.filter(function(it){return it.dc_inq==='C';});
+    var alugMes=debInq.filter(function(it){return it.tipo==='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var encMes=debInq.filter(function(it){return it.tipo!=='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var credMes=credInq.reduce(function(s,it){return s+(it.valor||0);},0);
+    var totMes=alugMes+encMes-credMes;
+    if(!totMes&&!alugMes)continue;
+    totAlug+=alugMes;totEnc+=encMes;totPago+=totMes;
+    linhas+='<tr><td>'+MESES[m-1]+'</td>'
+      +'<td class="r mo">'+fmt(alugMes)+'</td>'
+      +'<td class="r mo">'+fmt(encMes)+'</td>'
+      +'<td class="r mo" style="color:var(--green);">'+(credMes?'- '+fmt(credMes):'--')+'</td>'
+      +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totMes)+'</td></tr>';
+  }
+  var tbody=linhas||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Nenhum lancamento em '+ano+'.</td></tr>';
+  var h='<div class="card" style="margin-bottom:14px;">'
+    +'<div class="card-title">Inquilino -- Ano-base '+ano+'</div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:2;">'
+    +'<strong>'+(c.inq_nome||'--')+'</strong> - CPF: '+(c.inq_cpf||'--')+'<br>'
+    +'Imovel: '+(c.imovel_end||'--')+' - '+(c.imovel_cidade||'')+(c.imovel_uf?'/'+c.imovel_uf:'')+'<br>'
+    +'Proprietaria: '+(c.prop_nome||'--')+' - CPF: '+(c.prop_cpf||'--')
+    +'</div></div>'
+    +'<div class="metrics-strip" style="margin-bottom:14px;">'
+    +'<div class="metric"><div class="m-label">Total aluguel pago</div><div class="m-val ac" style="font-size:18px;">'+fmt(totAlug)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total encargos pagos</div><div class="m-val" style="font-size:18px;">'+fmt(totEnc)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total geral pago</div><div class="m-val gn" style="font-size:18px;">'+fmt(totPago)+'</div></div>'
+    +'</div>'
+    +'<div class="card"><div class="card-title">Detalhamento mensal</div><div class="tw"><table>'
+    +'<thead><tr><th>Mes</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Creditos</th><th class="r">Total pago</th></tr></thead>'
+    +'<tbody>'+tbody+'</tbody>'
+    +'<tfoot><tr><td>Total</td><td class="r mo">'+fmt(totAlug)+'</td><td class="r mo">'+fmt(totEnc)+'</td><td></td>'
+    +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totPago)+'</td></tr></tfoot>'
+    +'</table></div>'
+    +'<p style="font-size:11px;color:var(--text3);margin-top:10px;">Valores pagos pelo inquilino no ano-base '+ano+'. Comprovante para fins fiscais.</p>'
+    +'</div>';
+  document.getElementById('irInqOut').innerHTML=h;
+}
+</script>
 </body>
 </html>`);
   win.document.close();
@@ -2149,6 +2212,65 @@ onAuthStateChanged(auth, async (user) => {
     showLogin();
   }
 });
+</script>
+
+<script>
+var irTabAtivo='prop';
+function showIRTab(tab){
+  irTabAtivo=tab;
+  var bP=document.getElementById('irTabProp'),bI=document.getElementById('irTabInq');
+  if(bP){bP.style.background=tab==='prop'?'var(--accent)':'';bP.style.color=tab==='prop'?'#fff':'var(--text)';bP.style.borderColor=tab==='prop'?'var(--accent)':'var(--border2)';}
+  if(bI){bI.style.background=tab==='inq'?'var(--accent)':'';bI.style.color=tab==='inq'?'#fff':'var(--text)';bI.style.borderColor=tab==='inq'?'var(--accent)':'var(--border2)';}
+  var oP=document.getElementById('irPropOut'),oI=document.getElementById('irInqOut');
+  if(oP)oP.style.display=tab==='prop'?'block':'none';
+  if(oI)oI.style.display=tab==='inq'?'block':'none';
+}
+function gerarIRAtivo(){if(irTabAtivo==='prop')renderIR();else renderIRInq();}
+function imprimirIRAtivo(){imprimirExtrato(irTabAtivo==='prop'?'irPropOut':'irInqOut');}
+function renderIRInq(){
+  var ano=+document.getElementById('ir_ano').value;
+  var c=C();
+  var totPago=0,totAlug=0,totEnc=0,linhas='';
+  for(var m=1;m<=12;m++){
+    var k2=lKey(m,ano),d2=S.lancs[k2];
+    if(!d2||!d2.items||!d2.items.length)continue;
+    var debInq=d2.items.filter(function(it){return it.dc_inq==='D'||it.dc_inq==='D/C';});
+    var credInq=d2.items.filter(function(it){return it.dc_inq==='C';});
+    var alugMes=debInq.filter(function(it){return it.tipo==='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var encMes=debInq.filter(function(it){return it.tipo!=='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var credMes=credInq.reduce(function(s,it){return s+(it.valor||0);},0);
+    var totMes=alugMes+encMes-credMes;
+    if(!totMes&&!alugMes)continue;
+    totAlug+=alugMes;totEnc+=encMes;totPago+=totMes;
+    linhas+='<tr><td>'+MESES[m-1]+'</td>'
+      +'<td class="r mo">'+fmt(alugMes)+'</td>'
+      +'<td class="r mo">'+fmt(encMes)+'</td>'
+      +'<td class="r mo" style="color:var(--green);">'+(credMes?'- '+fmt(credMes):'--')+'</td>'
+      +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totMes)+'</td></tr>';
+  }
+  var tbody=linhas||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Nenhum lancamento em '+ano+'.</td></tr>';
+  var h='<div class="card" style="margin-bottom:14px;">'
+    +'<div class="card-title">Inquilino -- Ano-base '+ano+'</div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:2;">'
+    +'<strong>'+(c.inq_nome||'--')+'</strong> - CPF: '+(c.inq_cpf||'--')+'<br>'
+    +'Imovel: '+(c.imovel_end||'--')+' - '+(c.imovel_cidade||'')+(c.imovel_uf?'/'+c.imovel_uf:'')+'<br>'
+    +'Proprietaria: '+(c.prop_nome||'--')+' - CPF: '+(c.prop_cpf||'--')
+    +'</div></div>'
+    +'<div class="metrics-strip" style="margin-bottom:14px;">'
+    +'<div class="metric"><div class="m-label">Total aluguel pago</div><div class="m-val ac" style="font-size:18px;">'+fmt(totAlug)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total encargos pagos</div><div class="m-val" style="font-size:18px;">'+fmt(totEnc)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total geral pago</div><div class="m-val gn" style="font-size:18px;">'+fmt(totPago)+'</div></div>'
+    +'</div>'
+    +'<div class="card"><div class="card-title">Detalhamento mensal</div><div class="tw"><table>'
+    +'<thead><tr><th>Mes</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Creditos</th><th class="r">Total pago</th></tr></thead>'
+    +'<tbody>'+tbody+'</tbody>'
+    +'<tfoot><tr><td>Total</td><td class="r mo">'+fmt(totAlug)+'</td><td class="r mo">'+fmt(totEnc)+'</td><td></td>'
+    +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totPago)+'</td></tr></tfoot>'
+    +'</table></div>'
+    +'<p style="font-size:11px;color:var(--text3);margin-top:10px;">Valores pagos pelo inquilino no ano-base '+ano+'. Comprovante para fins fiscais.</p>'
+    +'</div>';
+  document.getElementById('irInqOut').innerHTML=h;
+}
 </script>
 </body>
 </html>
