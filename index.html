@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Gestão de Aluguéis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f2f1ed;--surface:#fff;--surface2:#f8f7f4;
+  --border:#e0ddd4;--border2:#ccc9be;
+  --text:#1a1917;--text2:#6b6860;--text3:#9e9b93;
+  --accent:#1a4a6b;--accent-lt:#e8f0f6;--accent-md:#c0d5e8;
+  --green:#2d6a2d;--green-lt:#eaf3ea;
+  --red:#8b2020;--red-lt:#fbeaea;
+  --amber:#7a4f00;--amber-lt:#fdf3e0;
+  --r:10px;--rsm:6px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;padding-bottom:env(safe-area-inset-bottom);}
+.app{display:flex;min-height:100vh;}
+
+/* sidebar */
+.sidebar{width:170px;background:var(--accent);color:#fff;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;height:-webkit-fill-available;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.sb-logo{padding:22px 18px 14px;border-bottom:1px solid rgba(255,255,255,.12);}
+.sb-logo h1{font-size:14px;font-weight:600;line-height:1.35;}
+.sb-logo p{font-size:11px;opacity:.55;margin-top:3px;}
+.sb-nav{flex:1;padding:10px 0;overflow-y:auto;}
+.sb-sec{padding:8px 16px 3px;font-size:10px;font-weight:600;opacity:.4;letter-spacing:.08em;text-transform:uppercase;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;font-size:13px;opacity:.72;transition:all .15s;border-left:3px solid transparent;}
+.sb-item:hover{opacity:1;background:rgba(255,255,255,.08);}
+.sb-item.active{opacity:1;background:rgba(255,255,255,.13);border-left-color:#fff;font-weight:500;}
+.sb-item svg{width:15px;height:15px;flex-shrink:0;}
+.sb-bottom{padding:12px 14px;border-top:1px solid rgba(255,255,255,.12);}
+.btn-new{width:100%;padding:9px;border:1px dashed rgba(255,255,255,.32);border-radius:var(--rsm);background:transparent;color:#fff;font-size:12px;cursor:pointer;font-family:var(--font);opacity:.75;transition:all .15s;}
+.btn-new:hover{opacity:1;background:rgba(255,255,255,.08);}
+
+/* main */
+.main{margin-left:170px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;height:48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.tb-back{display:none;align-items:center;gap:5px;padding:5px 9px;border-radius:var(--rsm);border:1px solid var(--border);background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;color:var(--text2);}
+.tb-back:hover{background:var(--surface2);}
+.tb-back.show{display:flex;}
+.tb-title{font-size:15px;font-weight:600;}
+.tb-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.content{padding:16px 20px 40px;flex:1;padding-bottom:max(40px,calc(env(safe-area-inset-bottom) + 16px));}
+
+/* pages */
+.page{display:none;}.page.active{display:block;}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:12px;}
+
+/* grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+
+/* form */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.field label{font-size:11px;font-weight:500;color:var(--text2);}
+.field input,.field select,.field textarea{padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);transition:border .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);}
+.field input[type=number]{font-family:var(--mono);}
+.field input[readonly]{background:var(--surface2);color:var(--text2);cursor:default;}
+
+/* buttons */
+.btn{padding:7px 15px;border-radius:var(--rsm);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn:hover{background:var(--surface2);}
+.btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-p:hover{opacity:.88;background:var(--accent);}
+.btn-d{background:transparent;color:var(--red);border-color:#e8b8b8;}
+.btn-d:hover{background:var(--red-lt);}
+.btn-sm{padding:4px 10px;font-size:12px;}
+
+/* metrics */
+.metrics-strip{display:flex;gap:10px;margin-bottom:16px;}
+.metrics-strip .metric{flex:1;min-width:0;}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;}
+.m-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px;}
+.m-val{font-size:20px;font-weight:600;font-family:var(--mono);}
+.m-val.ac{color:var(--accent);}
+.m-val.gn{color:var(--green);}
+
+/* dash list */
+.dash-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.dash-toolbar h2{font-size:18px;font-weight:600;}
+.dash-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
+.dl-cols{display:grid;grid-template-columns:100px 100px 1fr 1fr 1fr 120px 80px;align-items:center;}
+.dl-head{padding:10px 20px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.dl-head span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);}
+.dl-row{padding:15px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.dl-row:last-child{border-bottom:none;}
+.dl-row:hover{background:var(--surface2);}
+.dl-cod{font-size:15px;font-weight:700;color:var(--accent);}
+.dl-date{font-size:13px;color:var(--text2);}
+.dl-txt{font-size:13px;font-weight:500;padding-right:10px;}
+.dl-sub{font-size:11px;color:var(--text3);}
+.dl-sec{font-size:13px;color:var(--text2);padding-right:10px;}
+.dl-mo{font-size:13px;font-family:var(--mono);}
+.dash-empty{padding:48px;text-align:center;color:var(--text3);}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.tag-gn{background:var(--green-lt);color:var(--green);}
+.tag-am{background:var(--amber-lt);color:var(--amber);}
+.tag-rd{background:var(--red-lt);color:var(--red);}
+.tag-ac{background:var(--accent-lt);color:var(--accent);}
+
+/* tabs */
+.tab-bar{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.tab-btn{padding:8px 13px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .15s;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-pane{display:none;}.tab-pane.on{display:block;}
+
+/* alerts */
+.alert{padding:9px 13px;border-radius:var(--rsm);font-size:12px;margin-bottom:10px;line-height:1.5;}
+.alert-i{background:var(--accent-lt);color:var(--accent);border:1px solid var(--accent-md);}
+.alert-w{background:var(--amber-lt);color:var(--amber);border:1px solid #f0d9a0;}
+
+/* section header */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sh h3{font-size:13px;font-weight:600;}
+
+/* expense row */
+.exp-row{display:grid;grid-template-columns:150px 1fr 110px 120px 70px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+.exp-row:last-child{border-bottom:none;}
+.exp-row select,.exp-row input{padding:5px 7px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:var(--font);font-size:12px;width:100%;}
+
+/* fin row */
+.fin-row{display:grid;grid-template-columns:140px 1fr 110px 120px 110px 70px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+.fin-row:last-child{border-bottom:none;}
+.fin-row select,.fin-row input{padding:5px 7px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:var(--font);font-size:12px;width:100%;}
+
+/* extrato */
+.ext-head{background:var(--accent);color:#fff;border-radius:var(--r) var(--r) 0 0;padding:18px 22px;}
+.ext-head h2{font-size:15px;font-weight:600;}
+.ext-head p{font-size:11px;opacity:.7;margin-top:2px;}
+.ext-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden;}
+.ext-row{display:flex;justify-content:space-between;align-items:center;padding:9px 18px;border-bottom:1px solid var(--border);font-size:13px;}
+.ext-row:last-child{border-bottom:none;}
+.ext-row.tot{background:var(--surface2);font-weight:600;font-size:14px;}
+.ext-row.cr{color:var(--green);}
+.ext-row.db{color:var(--red);}
+.ext-row.hd{background:var(--surface2);}
+.ext-val{font-family:var(--mono);font-weight:500;}
+
+/* table */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:9px 11px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2);}
+th.r,td.r{text-align:right;}
+tbody td{padding:11px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody td.mo{font-family:var(--mono);}
+tbody tr:last-child td{border-bottom:none;}
+tfoot td{padding:9px 11px;font-weight:600;border-top:2px solid var(--border);}
+
+/* modal */
+.mo-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;}
+.mo-ov.open{display:flex;}
+.mo{background:var(--surface);border-radius:var(--r);padding:22px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.mo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.mo-h h2{font-size:15px;font-weight:600;}
+.mo-x{padding:3px 8px;border-radius:var(--rsm);border:1px solid var(--border);background:transparent;cursor:pointer;font-size:18px;color:var(--text3);line-height:1;}
+.mo-x:hover{color:var(--text);}
+
+
+/* ── LOGIN ── */
+#loginWrap{display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--accent);}
+.login-box{background:var(--surface);border-radius:16px;padding:40px 36px;width:360px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--accent);}
+.login-logo p{font-size:13px;color:var(--text3);margin-top:4px;}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px;}
+.login-btns{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.user-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3);}
+#userEmail{font-weight:500;color:var(--text2);}
+
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: column;
+  }
+  .sidebar.hidden { display: none; }
+  .main { margin-left: 0; }
+  .topbar { padding: 0 16px; }
+  .content { padding: 16px; }
+  .g2,.g3,.g4 { grid-template-columns: 1fr; }
+  .metrics-strip { flex-wrap: wrap; }
+  .metrics-strip .metric { min-width: calc(50% - 5px); }
+  .dl-cols { grid-template-columns: 80px 1fr 80px !important; }
+  .dl-head .dl-prop, .dl-head .dl-inq, .dl-head .dl-alug { display: none; }
+  .dl-row .dl-sec:first-of-type, .dl-row .dl-sec:last-of-type, .dl-row .dl-mo { display: none; }
+  .tab-bar { gap: 0; }
+  .tab-btn { padding: 10px 8px; font-size: 11px; }
+  .exp-row { grid-template-columns: 1fr 1fr !important; gap: 6px; }
+  .exp-row button { grid-column: span 2; }
+  .field-row, .field-row-3, .g2, .g3 { grid-template-columns: 1fr !important; }
+  #menuToggle { display: flex !important; }
+  .sb-bottom { padding: 8px 14px; }
+  .app { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    height: 100vh;
+    width: 260px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0 !important; }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+  .overlay.open { display: block; }
+}
+@media (min-width: 769px) {
+  #menuToggle { display: none !important; }
+  .overlay { display: none !important; }
+}
+
+
+/* ── PARTES ── */
+.parte-card{border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px;margin-bottom:10px;position:relative;}
+.parte-card:last-child{margin-bottom:0;}
+.parte-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.parte-title{font-size:12px;font-weight:600;color:var(--accent);}
+.parte-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.parte-grid2{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.parte-grid3{display:grid;grid-template-columns:3fr 1fr 1fr 1fr;gap:8px;}
+.parte-field{display:flex;flex-direction:column;gap:3px;}
+.parte-field label{font-size:10px;font-weight:500;color:var(--text3);}
+.parte-field input,.parte-field select{padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rsm);font-size:12px;font-family:var(--font);color:var(--text);background:var(--surface);}
+.parte-field input:focus,.parte-field select:focus{outline:none;border-color:var(--accent);}
+
+
+/* ── LANÇAMENTOS ── */
+.mes-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);color:var(--text2);white-space:nowrap;transition:all .15s;}
+.mes-btn:hover{border-color:var(--accent);color:var(--accent);}
+.mes-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.lanc-row{border-bottom:1px solid var(--border);transition:background .12s;}
+.lanc-row:hover{background:var(--surface2);}
+.lanc-row:last-child{border-bottom:none;}
+.dc-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;}
+.dc-D{background:#fbeaea;color:#8b2020;}
+.dc-C{background:#eaf3ea;color:#2d6a2d;}
+.dc-DC{background:#e8f0f6;color:#1a4a6b;}
+.pago-sim{color:var(--green);font-size:11px;font-weight:600;}
+.pago-nao{color:var(--text3);font-size:11px;}
+
+@media print{
+  @page{margin:1.5cm 2cm 1.5cm 2cm;}
+  *{box-sizing:border-box!important;}
+  .sidebar,.topbar,#mainTopbar,.no-print,.tab-bar,#tabBar,.tb-back,.tb-left,.tb-title,.tb-sub{display:none!important;}
+  .main{margin-left:0!important;width:100%!important;}
+  .content{padding:0!important;margin:0!important;width:100%!important;}
+  body{background:#fff!important;margin:0!important;padding:0!important;}
+  .app{display:block!important;}
+  .tab-pane{display:none!important;}
+  .tab-pane.on{display:block!important;width:100%!important;}
+  .card{box-shadow:none!important;border:1px solid #ddd!important;border-radius:4px!important;margin-bottom:8px!important;}
+  .ext-head{
+    background:#1a4a6b!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    color:#fff!important;
+    border-radius:4px 4px 0 0!important;
+    padding:16px 20px!important;
+  }
+  .ext-head h2,.ext-head *{color:#fff!important;}
+  .ext-body{border:1px solid #ddd!important;border-top:none!important;border-radius:0 0 4px 4px!important;}
+  .ext-row{padding:8px 16px!important;font-size:12px!important;}
+  .ext-row.hd{background:#f0f0f0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .ext-row.tot{background:#f5f5f5!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-weight:600!important;}
+  .ext-val{font-family:monospace!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap" style="display:none;">
+  <div class="login-box">
+    <div class="login-logo">
+      <div style="font-size:32px;margin-bottom:8px;">🏠</div>
+      <h1>Gestão de Aluguéis</h1>
+      <p>Faça login para acessar o sistema</p>
+    </div>
+    <div class="field"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com"/></div>
+    <div class="field"><label>Senha</label><input type="password" id="loginSenha" placeholder="Mínimo 6 caracteres"/></div>
+    <div class="login-err" id="loginErro"></div>
+    <div class="login-btns">
+      <button class="btn btn-p" id="btnLogin">Entrar</button>
+      <button class="btn" id="btnCadastro">Criar conta</button>
+    </div>
+    <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:16px;">Primeira vez? Preencha o e-mail e senha e clique em "Criar conta"</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appWrap" style="display:none;">
+<div class="app">
+
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo"><h1>Gestão de Aluguéis</h1><p>Administração de contratos</p></div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Principal</div>
+    <div class="sb-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Contratos
+    </div>
+    <div class="sb-item" id="nav-financeiro" onclick="showPage('financeiro')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Financeiro
+    </div>
+  </nav>
+  <div class="sb-bottom"><button class="btn-new" onclick="novoContrato()">+ Novo contrato</button></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar" id="mainTopbar">
+    <div class="tb-left">
+      <button id="menuToggle" onclick="toggleMenu()" style="display:none;padding:6px 10px;border-radius:var(--rsm);border:1px solid var(--border);background:transparent;cursor:pointer;font-size:18px;color:var(--text2);">☰</button>
+      <button class="tb-back" id="tbBack" onclick="showPage('dashboard')">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Contratos
+      </button>
+      <div><div class="tb-title" id="tbTitle">Contratos</div><div class="tb-sub" id="tbSub">Visão geral</div></div>
+    </div>
+    <div class="user-bar no-print">
+        <span id="userEmail"></span>
+        <button class="btn btn-sm" id="btnLogout">Sair</button>
+        <button class="btn btn-sm" onclick="window.print()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="metrics-strip">
+        <div class="metric"><div class="m-label">Total contratos</div><div class="m-val ac" id="m-tot">0</div></div>
+        <div class="metric"><div class="m-label">Ativos</div><div class="m-val gn" id="m-at">0</div></div>
+        <div class="metric"><div class="m-label">Receita bruta / mês</div><div class="m-val" id="m-rec">R$ 0,00</div></div>
+        <div class="metric"><div class="m-label">Repasse estimado / mês</div><div class="m-val gn" id="m-rep">R$ 0,00</div></div>
+      </div>
+      <div class="dash-toolbar">
+        <h2>Contratos <span id="dashCount" style="font-size:14px;font-weight:400;color:var(--text3);margin-left:8px;"></span></h2>
+        <button class="btn btn-p btn-sm" onclick="novoContrato()">+ Novo contrato</button>
+      </div>
+      <div class="dash-list">
+        <div class="dl-cols dl-head">
+          <span>Código</span><span>Início</span><span>Imóvel</span>
+          <span>Proprietária</span><span>Inquilino</span><span>Aluguel</span><span>Situação</span>
+        </div>
+        <div id="dashRows"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: FINANCEIRO (global) -->
+    <div class="page" id="page-financeiro">
+      <div class="dash-toolbar">
+        <h2>Financeiro</h2>
+      </div>
+      <div class="card no-print">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="field" style="margin:0;min-width:140px;"><label>Mês</label>
+            <select id="finG_mes" onchange="renderFin()"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
+          </div>
+          <div class="field" style="margin:0;min-width:100px;"><label>Ano</label><select id="finG_ano" onchange="renderFin()"></select></div>
+          <div class="field" style="margin:0;min-width:220px;"><label>Filtrar por contrato</label>
+            <select id="finG_contrato" onchange="renderFin()"><option value="todos">Todos os contratos</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sh"><h3>Contas a Receber</h3><button class="btn btn-sm" onclick="addFin('rec')">+ Linha</button></div>
+        <div class="alert alert-i">Valores que você tem a receber neste período.</div>
+        <div id="finRec"></div>
+      </div>
+      <div class="card">
+        <div class="sh"><h3>Contas a Pagar</h3><button class="btn btn-sm" onclick="addFin('pag')">+ Linha</button></div>
+        <div class="alert alert-w">Valores que você tem a pagar neste período.</div>
+        <div id="finPag"></div>
+      </div>
+      <div class="card" style="background:var(--surface2);">
+        <div class="card-title">Resumo do período</div>
+        <div style="display:flex;gap:32px;flex-wrap:wrap;">
+          <div><div class="m-label">Total a receber</div><div class="m-val gn" id="finTotRec">R$ 0,00</div></div>
+          <div><div class="m-label">Total a pagar</div><div class="m-val" style="color:var(--red)" id="finTotPag">R$ 0,00</div></div>
+          <div><div class="m-label">Saldo</div><div class="m-val" id="finSaldo">R$ 0,00</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:24px;"><button class="btn btn-p" onclick="salvarFin()">Salvar financeiro</button></div>
+    </div>
+
+    <!-- PAGE: CONTRATO (9 abas) -->
+    <div class="page" id="page-contrato">
+      <div class="tab-bar" id="tabBar">
+        <button class="tab-btn on"  onclick="goTab(0)">📋 Contrato</button>
+        <button class="tab-btn"     onclick="goTab(1)">🏠 Imóvel</button>
+        <button class="tab-btn"     onclick="goTab(2)">👥 Partes</button>
+        <button class="tab-btn"     onclick="goTab(3)">📈 Reajustes</button>
+        <button class="tab-btn"     onclick="goTab(4)">💰 Lançamentos</button>
+        <button class="tab-btn"     onclick="goTab(5)">📄 Extrato Inq.</button>
+        <button class="tab-btn"     onclick="goTab(6)">🏦 Repasse</button>
+        <button class="tab-btn"     onclick="goTab(7)">📊 IR</button>
+        <button class="tab-btn"     onclick="goTab(8)">🧾 Recibo</button>
+      </div>
+
+      <!-- ABA 0: CONTRATO -->
+      <div class="tab-pane on" id="pane0">
+        <div class="card">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>Assinatura</label><input type="date" id="cont_assinatura"/></div>
+            <div class="field" style="margin:0;"><label>Início</label><input type="date" id="cont_inicio" oninput="calcFim()"/></div>
+            <div class="field" style="margin:0;"><label>Duração (meses)</label><input type="number" id="cont_dur" placeholder="Ex: 30" min="1" oninput="calcFim()"/></div>
+            <div class="field" style="margin:0;"><label>Término (auto)</label><input type="text" id="cont_fim" readonly/></div>
+            <div class="field" style="margin:0;"><label>Permanência mín.</label><input type="number" id="cont_permanencia" placeholder="Ex: 12" min="1"/></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>Aluguel (R$)</label><input type="number" id="cont_aluguel" placeholder="0,00" step="0.01"/></div>
+            <div class="field" style="margin:0;"><label>Vencimento (dia)</label><input type="number" id="cont_venc" placeholder="10" min="1" max="31"/></div>
+            <div class="field" style="margin:0;"><label>Regime de cobrança</label>
+              <select id="cont_regime">
+                <option value="vencido">Vencido (paga pelo mês que passou)</option>
+                <option value="a_vencer">A vencer (paga pelo mês que vem)</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;"><label>Índice reajuste</label>
+              <select id="cont_indice"><option>IGPM</option><option>IPCA</option><option>INPC</option><option>Fixo</option><option>Sem reajuste</option></select>
+            </div>
+            <div class="field" style="margin:0;"><label>Taxa adm. (R$)</label><input type="number" id="cont_taxa_adm" placeholder="0,00" step="0.01"/></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>Taxa cobrada de</label>
+              <select id="cont_taxa_de">
+                <option value="proprietaria">Proprietária</option>
+                <option value="inquilino">Inquilino</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>1º aluguel recebido</label><input type="date" id="cont_primeiro_aluguel"/></div>
+            <div class="field" style="margin:0;"><label>Finalidade</label>
+              <select id="cont_finalidade">
+                <option value="">Selecione...</option>
+                <option value="residencial">Residencial</option>
+                <option value="comercial">Comercial</option>
+                <option value="temporada">Temporada</option>
+                <option value="misto">Misto</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;"><label>Garantia</label>
+              <select id="cont_garantia" onchange="toggleGarantiaValor()">
+                <option value="">Selecione...</option>
+                <option value="caucao">Caução</option>
+                <option value="seguro_fianca">Seguro Fiança</option>
+                <option value="fiador">Fiador</option>
+                <option value="titulo_capitalizacao">Título de Capitalização</option>
+                <option value="sem_garantia">Sem Garantia</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;" id="garantiaValorWrap">
+              <label id="garantiaValorLabel">Valor garantia (R$)</label>
+              <input type="number" id="cont_garantia_valor" placeholder="0,00" step="0.01"/>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>Seguradora</label><input type="text" id="cont_seg_seguradora" placeholder="Nome da seguradora"/></div>
+            <div class="field" style="margin:0;"><label>Vigência seguro</label><input type="text" id="cont_seg_vigencia" placeholder="Ex: 01/06/2025 a 31/05/2026"/></div>
+            <div class="field" style="margin:0;"><label>Valor seguro (R$)</label><input type="number" id="cont_seg_valor" placeholder="0,00" step="0.01"/></div>
+          </div>
+
+          <div class="field" style="margin:0;"><label>Observações</label><textarea id="cont_obs" rows="2" style="resize:vertical;width:100%;" placeholder="Cláusulas especiais, multas, garantias..."></textarea></div>
+
+        </div>
+        <div class="card" id="vigCard" style="display:none;">
+          <div class="card-title">Resumo da vigência</div>
+          <div style="display:flex;gap:32px;flex-wrap:wrap;">
+            <div><div class="m-label">Início</div><div style="font-size:14px;font-weight:600;" id="rv-ini">—</div></div>
+            <div><div class="m-label">Término</div><div style="font-size:14px;font-weight:600;" id="rv-fim">—</div></div>
+            <div><div class="m-label">Duração</div><div style="font-size:14px;font-weight:600;" id="rv-dur">—</div></div>
+            <div><div class="m-label">Situação</div><div id="rv-sit">—</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:24px;">
+          <button class="btn btn-p" onclick="salvarContrato()">Salvar contrato</button>
+          <button class="btn btn-d" id="btnExc" style="display:none;" onclick="pedirExcluir()">Excluir contrato</button>
+          <button class="btn" onclick="showPage('dashboard')">Voltar</button>
+        </div>
+      </div>
+
+      <!-- ABA 1: IMÓVEL -->
+      <div class="tab-pane" id="pane1">
+        <div class="card" style="padding:16px 18px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>Rua / Av. / Logradouro</label><input type="text" id="imovel_rua" placeholder="Rua, Av., Alameda..."/></div>
+            <div class="field" style="margin:0;"><label>Número</label><input type="text" id="imovel_num" placeholder="Ex: 65"/></div>
+            <div class="field" style="margin:0;"><label>Apto / Sala / Bloco</label><input type="text" id="imovel_apto" placeholder="Ex: Apto. 74"/></div>
+            <div class="field" style="margin:0;"><label>Bairro</label><input type="text" id="imovel_bairro" placeholder="Ex: Campo Belo"/></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+            <div class="field" style="margin:0;"><label>CEP</label><input type="text" id="imovel_cep" placeholder="00000-000" maxlength="9"/></div>
+            <div class="field" style="margin:0;"><label>Cidade</label><input type="text" id="imovel_cidade" placeholder="São Paulo"/></div>
+            <div class="field" style="margin:0;"><label>UF</label><input type="text" id="imovel_uf" placeholder="SP" maxlength="2"/></div>
+            <div class="field" style="margin:0;"><label>Tipo</label>
+              <select id="imovel_tipo"><option>Apartamento</option><option>Casa</option><option>Comercial</option><option>Sala</option><option>Galpão</option></select>
+            </div>
+            <div class="field" style="margin:0;"><label>Matrícula / SQL / IPTU</label><input type="text" id="imovel_mat" placeholder="Nº de matrícula ou SQL"/></div>
+          </div>
+          <!-- campo composto para compatibilidade -->
+          <input type="hidden" id="imovel_end"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:24px;"><button class="btn btn-p" onclick="salvarImovel()">Salvar</button></div>
+      </div>
+
+      <!-- ABA 2: PARTES -->
+      <div class="tab-pane" id="pane2">
+
+        <!-- PROPRIETÁRIOS -->
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);">Proprietário(s)</span>
+            <button class="btn btn-sm" onclick="addParte('prop')">+ Adicionar proprietário</button>
+          </div>
+          <div id="propList"></div>
+        </div>
+
+        <!-- INQUILINOS -->
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);">Inquilino(s)</span>
+            <button class="btn btn-sm" onclick="addParte('inq')">+ Adicionar inquilino</button>
+          </div>
+          <div id="inqList"></div>
+        </div>
+
+        <!-- campos ocultos para compatibilidade com extratos -->
+        <input type="hidden" id="prop_nome"/><input type="hidden" id="prop_cpf"/>
+        <input type="hidden" id="prop_email"/><input type="hidden" id="prop_tel"/>
+        <input type="hidden" id="prop_banco"/>
+        <input type="hidden" id="inq_nome"/><input type="hidden" id="inq_cpf"/>
+        <input type="hidden" id="inq_email"/><input type="hidden" id="inq_tel"/>
+
+        <div style="display:flex;gap:8px;margin-bottom:24px;">
+          <button class="btn btn-p" onclick="salvarPartes()">Salvar partes</button>
+        </div>
+      </div>
+
+
+      <!-- ABA 3: REAJUSTES -->
+      <div class="tab-pane" id="pane3">
+        <div class="card">
+          <div style="display:flex;gap:40px;align-items:center;flex-wrap:wrap;">
+            <div>
+              <div class="m-label">Aluguel inicial</div>
+              <div style="font-size:18px;font-weight:700;font-family:var(--mono);color:var(--accent);" id="raj_inicial">R$ 0,00</div>
+            </div>
+            <div style="font-size:20px;color:var(--border2);">→</div>
+            <div>
+              <div class="m-label">Aluguel vigente</div>
+              <div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green);" id="raj_vigente">R$ 0,00</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="raj_vigente_desde"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card no-print">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:10px;">Aplicar novo reajuste</div>
+          <div style="display:grid;grid-template-columns:100px 1fr 120px 150px 180px auto auto;gap:8px;align-items:flex-end;">
+            <div class="parte-field">
+              <label>Índice</label>
+              <select id="raj_indice">
+                <option value="IGPM">IGPM</option>
+                <option value="IPCA">IPCA</option>
+                <option value="INPC">INPC</option>
+                <option value="Fixo">Fixo</option>
+              </select>
+            </div>
+            <div class="parte-field">
+              <label>Mês de reajuste</label>
+              <input type="text" id="raj_periodo" placeholder="Ex: março/2026"/>
+            </div>
+            <div class="parte-field">
+              <label>% acumulado</label>
+              <input type="number" id="raj_percentual" placeholder="4.62" step="0.01" oninput="calcularReajuste()"/>
+            </div>
+            <div class="parte-field">
+              <label>Vigência</label>
+              <input type="date" id="raj_data"/>
+            </div>
+            <div class="parte-field">
+              <label>Valor reajustado</label>
+              <input type="text" id="raj_novo_valor" readonly style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green);background:var(--green-lt);padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rsm);"/>
+            </div>
+            <div class="parte-field">
+              <label>&nbsp;</label>
+              <button class="btn btn-sm" onclick="calcularReajuste()">Calcular</button>
+            </div>
+            <div class="parte-field">
+              <label>&nbsp;</label>
+              <button class="btn btn-p btn-sm" onclick="aplicarReajuste()">Aplicar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Histórico de reajustes</div>
+          <div id="rajHistorico"></div>
+        </div>
+      </div>
+
+      <!-- ABA 4: LANÇAMENTOS -->
+      <div class="tab-pane" id="pane4">
+
+        <!-- toolbar -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="btn btn-p btn-sm" onclick="abrirModalLanc(null)">+ Novo lançamento</button>
+          <button class="btn btn-sm" onclick="abrirModeloFixos()">⚙️ Configurar despesas fixas</button>
+          <button class="btn btn-sm" onclick="openMo('modalProporcional')">📐 Calcular proporcional</button>
+          <button class="btn btn-sm" onclick="salvarLanc()">💾 Salvar</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--text3);" id="lancSituacao"></span>
+        </div>
+
+        <!-- navegação por meses -->
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;">
+          <button class="btn btn-sm" onclick="navMes(-1)" style="flex-shrink:0;">←</button>
+          <div id="mesesBar" style="display:flex;gap:4px;flex:1;overflow-x:auto;"></div>
+          <button class="btn btn-sm" onclick="navMes(1)" style="flex-shrink:0;">→</button>
+        </div>
+
+        <!-- tabela de lançamentos -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table id="lancTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px;">
+              <thead>
+                <tr style="background:var(--accent-lt);border-bottom:1px solid var(--border);">
+                  <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Histórico</th>
+                  <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Tipo</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Pago Adm</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">D/C Prop.</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">D/C Inq.</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Vencimento</th>
+                  <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Valor</th>
+                  <th style="padding:8px 10px;width:60px;"></th>
+                </tr>
+              </thead>
+              <tbody id="lancBody"></tbody>
+              <tfoot id="lancFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- totais -->
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;" id="lancTotais"></div>
+
+      </div>
+
+      <!-- Modal novo/editar lançamento -->
+      <div class="mo-ov" id="modalLanc">
+        <div class="mo" style="width:520px;">
+          <div class="mo-h">
+            <h2 id="modalLancTitle">Novo lançamento</h2>
+            <button class="mo-x" onclick="closeMo('modalLanc')">×</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="grid-column:span 2;margin:0;">
+              <label>Histórico / Descrição</label>
+              <input type="text" id="ml_hist" placeholder="Ex: Condomínio ref. junho/2025"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Tipo de evento</label>
+              <select id="ml_tipo" onchange="checkNovaCategoria(this,'ml_tipo')"></select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Valor (R$)</label>
+              <input type="number" id="ml_valor" placeholder="0,00" step="0.01"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Vencimento</label>
+              <input type="date" id="ml_venc"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Pago / Administrado</label>
+              <select id="ml_pago">
+                <option value="nao">Não</option>
+                <option value="sim">Sim</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>D/C Proprietária</label>
+              <select id="ml_dc_prop">
+                <option value="">—</option>
+                <option value="D">D (Débito)</option>
+                <option value="C">C (Crédito)</option>
+                <option value="D/C">D/C</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>D/C Inquilino</label>
+              <select id="ml_dc_inq">
+                <option value="">—</option>
+                <option value="D">D (Débito)</option>
+                <option value="C">C (Crédito)</option>
+                <option value="D/C">D/C</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-p" onclick="salvarModalLanc()">Salvar lançamento</button>
+            <button class="btn" onclick="closeMo('modalLanc')">Cancelar</button>
+          </div>
+          <input type="checkbox" id="ml_fixo" style="display:none;"/>
+        </div>
+      </div>
+
+      <!-- Modal: Configurar despesas fixas (modelo do contrato) -->
+      <div class="mo-ov" id="modalModelo">
+        <div class="mo" style="width:900px;max-width:96vw;">
+          <div class="mo-h">
+            <h2>⚙️ Despesas fixas do contrato</h2>
+            <button class="mo-x" onclick="fecharModeloEAtualizar()">×</button>
+          </div>
+          <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">
+            Configure aqui as despesas que se repetem todo mês. Elas serão geradas automaticamente em cada mês com a data de vencimento já preenchida.
+            Aluguel, Água, Luz e Gás usam referência do <strong>mês anterior</strong> (mora e depois paga); as demais usam o mês atual.
+          </p>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+            <button class="btn btn-p btn-sm" onclick="abrirModalModeloItem(null)">+ Adicionar despesa</button>
+          </div>
+          <div style="overflow-x:auto;max-height:50vh;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px;">
+              <thead>
+                <tr style="background:var(--accent-lt);border-bottom:1px solid var(--border);">
+                  <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">Histórico</th>
+                  <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">Tipo</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">Pago Adm</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">D/C Prop.</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">D/C Inq.</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">Dia Venc.</th>
+                  <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text3);">Valor</th>
+                  <th style="padding:8px 10px;width:60px;"></th>
+                </tr>
+              </thead>
+              <tbody id="modeloBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-p" onclick="fecharModeloEAtualizar()">Concluir e atualizar mês atual</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Item do modelo de despesas fixas -->
+      <div class="mo-ov" id="modalModeloItem">
+        <div class="mo" style="width:520px;">
+          <div class="mo-h">
+            <h2>Despesa fixa</h2>
+            <button class="mo-x" onclick="closeMo('modalModeloItem')">×</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="grid-column:span 2;margin:0;">
+              <label>Histórico / Descrição</label>
+              <input type="text" id="mm_hist" placeholder="Ex: Condomínio ordinário"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Tipo de evento</label>
+              <select id="mm_tipo" onchange="checkNovaCategoria(this,'mm_tipo')"></select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Valor (R$)</label>
+              <input type="number" id="mm_valor" placeholder="0,00" step="0.01"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Dia de vencimento</label>
+              <input type="number" id="mm_dia" placeholder="Ex: 10" min="1" max="31"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Pago / Administrado</label>
+              <select id="mm_pago">
+                <option value="nao">Não</option>
+                <option value="sim">Sim</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>D/C Proprietária</label>
+              <select id="mm_dc_prop">
+                <option value="">—</option>
+                <option value="D">D (Débito)</option>
+                <option value="C">C (Crédito)</option>
+                <option value="D/C">D/C</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>D/C Inquilino</label>
+              <select id="mm_dc_inq">
+                <option value="">—</option>
+                <option value="D">D (Débito)</option>
+                <option value="C">C (Crédito)</option>
+                <option value="D/C">D/C</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-p" onclick="salvarModeloItem()">Salvar despesa</button>
+            <button class="btn" onclick="closeMo('modalModeloItem')">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Calculadora de aluguel proporcional -->
+      <div class="mo-ov" id="modalProporcional">
+        <div class="mo" style="width:480px;">
+          <div class="mo-h">
+            <h2>📐 Calcular aluguel proporcional</h2>
+            <button class="mo-x" onclick="closeMo('modalProporcional')">×</button>
+          </div>
+          <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">
+            Use para entrada no meio do mês, rescisão ou qualquer período proporcional. O cálculo considera mês com <strong>30 dias</strong>.
+          </p>
+          <div class="g2">
+            <div class="field" style="margin:0;"><label>Data de início do período</label><input type="date" id="pp_data"/></div>
+            <div class="field" style="margin:0;"><label>Valor do aluguel mensal (R$)</label><input type="number" id="pp_valor" step="0.01" placeholder="0,00"/></div>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn btn-p btn-sm" onclick="calcularProporcionalModal()">Calcular</button>
+          </div>
+          <div id="pp_resultado" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <!-- ABA 5: EXTRATO INQUILINO -->
+      <div class="tab-pane" id="pane5">
+        <div class="card no-print">
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div class="field" style="margin:0;min-width:140px;"><label>Mês</label><select id="ei_mes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+            <div class="field" style="margin:0;min-width:90px;"><label>Ano</label><select id="ei_ano"></select></div>
+            <button class="btn btn-p btn-sm" onclick="renderExtInq()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirExtrato('extInqOut')">🖨️ Imprimir</button>
+          </div>
+        </div>
+        <div id="extInqOut"></div>
+      </div>
+
+      <!-- ABA 6: REPASSE PROPRIETÁRIA -->
+      <div class="tab-pane" id="pane6">
+        <div class="card no-print">
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div class="field" style="margin:0;min-width:140px;"><label>Mês</label><select id="ep_mes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+            <div class="field" style="margin:0;min-width:90px;"><label>Ano</label><select id="ep_ano"></select></div>
+            <button class="btn btn-p btn-sm" onclick="renderExtProp()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirExtrato('extPropOut')">🖨️ Imprimir</button>
+          </div>
+        </div>
+        <div id="extPropOut"></div>
+      </div>
+
+      <!-- ABA 7: INFORME IR -->
+      <div class="tab-pane" id="pane7">
+        <div class="card no-print">
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="field" style="margin:0;min-width:120px;"><label>Ano-base</label><select id="ir_ano"></select></div>
+            <button class="btn btn-sm" id="irTabProp" onclick="showIRTab('prop')" style="background:var(--accent);color:#fff;border-color:var(--accent);">&#127968; Propriet&#225;ria</button>
+            <button class="btn btn-sm" id="irTabInq" onclick="showIRTab('inq')">&#128100; Inqu&#237;lino</button>
+            <button class="btn btn-p btn-sm" onclick="gerarIRAtivo()">Gerar</button>
+            <button class="btn btn-sm" onclick="imprimirIRAtivo()">&#128424; Imprimir</button>
+          </div>
+        </div>
+        <div id="irPropOut"></div>
+        <div id="irInqOut" style="display:none;"></div>
+      </div>
+
+      <!-- ABA 8: RECIBO -->
+      <div class="tab-pane" id="pane8">
+        <div class="card no-print">
+          <div class="g2" style="max-width:400px;">
+            <div class="field"><label>Mês de referência</label><select id="rec_mes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+            <div class="field"><label>Ano</label><select id="rec_ano"></select></div>
+          </div>
+          <div class="g2" style="max-width:400px;">
+            <div class="field"><label>Data de pagamento</label><input type="date" id="rec_dtpag"/></div>
+            <div class="field"><label>Forma de pagamento</label><select id="rec_forma"><option>Transferência bancária</option><option>PIX</option><option>Depósito</option><option>Dinheiro</option><option>Cheque</option></select></div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="renderRecibo()">Gerar recibo</button>
+          <button class="btn btn-sm" onclick="imprimirExtrato('reciboOut')">🖨️ Imprimir</button>
+        </div>
+        <div id="reciboOut"></div>
+      </div>
+
+    </div><!-- /page-contrato -->
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+</div><!-- /appWrap -->
+
+<!-- Modal excluir -->
+<div class="mo-ov" id="moExc">
+  <div class="mo">
+    <div class="mo-h"><h2>Excluir contrato</h2><button class="mo-x" onclick="closeMo('moExc')">×</button></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:18px;">Tem certeza? Os lançamentos também serão excluídos.</p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-d" onclick="confirmarExcluir()">Sim, excluir</button>
+      <button class="btn" onclick="closeMo('moExc')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════════
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+// Tabela progressiva mensal — vigente até abr/2025
+const FAIXAS_2024 = [[2112.00,0,0],[2826.65,.075,158.40],[3751.05,.15,370.40],[4664.68,.225,651.73],[Infinity,.275,884.96]];
+// Tabela progressiva mensal — vigente de maio/2025 a dez/2025
+const FAIXAS_2025 = [[2259.20,0,0],[2826.65,.075,169.44],[3751.05,.15,381.44],[4664.68,.225,662.77],[Infinity,.275,896]];
+// Tabela progressiva mensal — vigente a partir de jan/2026 (Lei nº 15.270/2025 e MPV nº 1.294/2025)
+const FAIXAS_2026 = [[2428.80,0,0],[2826.65,.075,182.16],[3751.05,.15,394.16],[4664.68,.225,675.49],[Infinity,.275,908.73]];
+// Por compatibilidade com código existente que usa FAIXAS diretamente
+const FAIXAS = FAIXAS_2026;
+
+function getFaixasPorAno(ano) {
+  if (ano >= 2026) return FAIXAS_2026;
+  if (ano === 2025) return FAIXAS_2025;
+  return FAIXAS_2024;
+}
+
+// Redutor adicional 2026 (Lei nº 15.270/2025): zera/reduz o imposto para base líquida até R$ 7.350
+// Valor máximo do redutor: R$ 312,89 (em até R$ 5.000) com queda linear até zero em R$ 7.350
+function calcRedutor2026(baseLiquida) {
+  if (baseLiquida <= 5000) {
+    return 312.89;
+  } else if (baseLiquida <= 7350) {
+    // Redução linear de 312,89 até 0 entre 5.000,01 e 7.350,00
+    const proporcao = (7350 - baseLiquida) / (7350 - 5000);
+    return Math.max(0, 312.89 * proporcao);
+  }
+  return 0;
+}
+
+function calcIR(b, ano) {
+  const anoRef = ano || new Date().getFullYear();
+  const faixas = getFaixasPorAno(anoRef);
+  let aliq = 0, imp = 0;
+  for (const [a, al, d] of faixas) {
+    if (b <= a) { imp = Math.max(0, b * al - d); aliq = al; break; }
+  }
+  // Aplica o redutor adicional somente para o ano-calendário 2026 em diante
+  if (anoRef >= 2026) {
+    const redutor = Math.min(calcRedutor2026(b), imp);
+    imp = Math.max(0, imp - redutor);
+  }
+  return { imp, aliq };
+}
+const CATS_INQ  = ['Condomínio ordinário','Fundo de reserva','IPTU','Água','Luz','Gás','Seguro','Multa','Outro'];
+const CATS_PROP = ['Condomínio ordinário','Fundo de reserva','IPTU','Taxa de administração','Seguro','Reforma','Manutenção','Outro'];
+const CATS_FIN  = ['Aluguel','Condomínio','IPTU','Taxa de adm.','Seguro','Repasse','Manutenção','Reforma','Honorários','Outros'];
+
+// Categorias de despesas dos lançamentos — editável pelo usuário, persistida globalmente
+const CATS_LANC_PADRAO = ['Aluguel','Condomínio ordinário','Fundo de reserva','IPTU','Água','Luz','Gás','Taxa de administração','Seguro','Reforma','Manutenção','Carnê Leão','Multa','Crédito inquilino','Crédito proprietária','Outros'];
+function getCatsLanc() {
+  if (!S.catsLanc || !S.catsLanc.length) S.catsLanc = [...CATS_LANC_PADRAO];
+  return S.catsLanc;
+}
+function populateSelectCats(selectId, valorAtual) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const cats = getCatsLanc();
+  sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') + '<option value="__nova__">+ Adicionar nova categoria...</option>';
+  if (valorAtual) sel.value = valorAtual;
+}
+function checkNovaCategoria(selectEl, selectId) {
+  if (selectEl.value === '__nova__') {
+    const nome = prompt('Nome da nova categoria de despesa:');
+    if (nome && nome.trim()) {
+      const cats = getCatsLanc();
+      if (!cats.includes(nome.trim())) {
+        cats.push(nome.trim());
+        S.catsLanc = cats;
+        if (window.saveCloud) window.saveCloud(); else save();
+      }
+      populateSelectCats(selectId, nome.trim());
+    } else {
+      populateSelectCats(selectId, CATS_LANC_PADRAO[0]);
+    }
+  }
+}
+const CAMPOS = ['prop_nome','prop_cpf','prop_email','prop_tel','prop_banco',
+  'inq_nome','inq_cpf','inq_email','inq_tel',
+  'imovel_end','imovel_rua','imovel_num','imovel_apto','imovel_bairro','imovel_cep','imovel_cidade','imovel_uf','imovel_tipo','imovel_mat',
+  'cont_inicio','cont_dur','cont_aluguel','cont_venc','cont_indice','cont_regime',
+  'cont_taxa_adm','cont_taxa_de','cont_primeiro_aluguel','cont_obs',
+  'cont_assinatura','cont_permanencia','cont_finalidade','cont_garantia','cont_garantia_valor',
+  'cont_seg_vigencia','cont_seg_seguradora','cont_seg_valor',
+  'cont_aluguel_vigente','cont_aluguel_vigente_desde'];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let S;
+try { S = JSON.parse(localStorage.getItem('aluguel_v4')) || newState(); } catch(e) { S = newState(); }
+function newState() { return {contratos:[], idx:null, lancs:{}}; }
+function save() { localStorage.setItem('aluguel_v4', JSON.stringify(S)); }
+function C() {
+  if (S.idx === null) return {};
+  const c = S.contratos[S.idx];
+  // Ensure prop/inq fields are always synced
+  if (c && (c._props || c.prop_nome)) syncFromContrato(c);
+  return c;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function fmt(v) {
+  if (v == null || isNaN(+v)) return 'R$ 0,00';
+  const neg = +v < 0;
+  const abs = Math.abs(+v).toFixed(2);
+  const [i, d] = abs.split('.');
+  const iF = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (neg ? '− R$ ' : 'R$ ') + iF + ',' + d;
+}
+function fmtD(s) { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+function cod(i) { return String(i+1).padStart(3,'0'); }
+// calcIR já definido acima com suporte a tabela por ano
+function isAtivo(c) { return !c._fimIso || c._fimIso >= new Date().toISOString().slice(0,10); }
+function lKey(mes,ano) { return `${S.idx}_${ano}-${String(mes).padStart(2,'0')}`; }
+function curLKey() { return lKey(+document.getElementById('lanc_mes').value, +document.getElementById('lanc_ano').value); }
+
+// masks
+function maskCPF(v) { v=v.replace(/\D/g,'').slice(0,11); if(v.length>9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4'); if(v.length>6) return v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3'); if(v.length>3) return v.replace(/(\d{3})(\d{1,3})/,'$1.$2'); return v; }
+function maskTel(v) { v=v.replace(/\D/g,'').slice(0,11); if(v.length>10) return v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3'); if(v.length>6) return v.replace(/(\d{2})(\d{4,5})(\d{0,4})/,'($1) $2-$3'); if(v.length>2) return v.replace(/(\d{2})(\d+)/,'($1) $2'); return v; }
+function maskCEP(v) { v=v.replace(/\D/g,'').slice(0,8); if(v.length>5) return v.replace(/(\d{5})(\d{1,3})/,'$1-$2'); return v; }
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGAÇÃO DE PÁGINAS
+// ═══════════════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  const ni=document.getElementById('nav-'+id); if(ni) ni.classList.add('active');
+  const back=document.getElementById('tbBack');
+  if (id==='dashboard') {
+    back.classList.remove('show');
+    document.getElementById('tbTitle').textContent='Contratos';
+    document.getElementById('tbSub').textContent='Visão geral';
+    renderDashboard();
+  } else if (id==='financeiro') {
+    back.classList.remove('show');
+    document.getElementById('tbTitle').textContent='Financeiro';
+    document.getElementById('tbSub').textContent='Contas a pagar e a receber — todos os contratos';
+    renderFinGlobal();
+  } else {
+    back.classList.add('show');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGAÇÃO DE ABAS
+// ═══════════════════════════════════════════════════════════
+let curTab = 0;
+function goTab(n) {
+  curTab = n;
+  // botões
+  const btns = document.querySelectorAll('#tabBar .tab-btn');
+  btns.forEach((b,i) => b.classList.toggle('on', i===n));
+  // painéis
+  for (let i=0; i<=8; i++) {
+    const p = document.getElementById('pane'+i);
+    if (p) p.classList.toggle('on', i===n);
+  }
+  if (n===2) renderPartes();
+  if (n===3) renderReajustes();
+  if (n===4) renderLancs();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDashboard() {
+  const cs = S.contratos;
+  const at = cs.filter(c=>isAtivo(c));
+  const totA = cs.reduce((s,c)=>s+(parseFloat(c.cont_aluguel)||0),0);
+  const totR = cs.reduce((s,c)=>{const a=parseFloat(c.cont_aluguel)||0,t=parseFloat(c.cont_taxa_adm)||0;return s+(c.cont_taxa_de==='proprietaria'?a-t:a);},0);
+  document.getElementById('m-tot').textContent=cs.length;
+  document.getElementById('m-at').textContent=at.length;
+  document.getElementById('m-rec').textContent=fmt(totA);
+  document.getElementById('m-rep').textContent=fmt(totR);
+  document.getElementById('dashCount').textContent=cs.length+' cadastrado'+(cs.length!==1?'s':'');
+
+  const rows = document.getElementById('dashRows');
+  if (!cs.length) { rows.innerHTML='<div class="dash-empty">Nenhum contrato. Clique em <strong>+ Novo contrato</strong>.</div>'; return; }
+  rows.innerHTML = cs.map((c,i)=>`
+    <div class="dl-cols dl-row" onclick="abrirContrato(${i})">
+      <div class="dl-cod">${cod(i)}</div>
+      <div class="dl-date">${fmtD(c.cont_inicio)}</div>
+      <div><div class="dl-txt">${c.imovel_end||'—'}</div><div class="dl-sub">${c.imovel_cidade||''}${c.imovel_uf?' / '+c.imovel_uf:''}</div></div>
+      <div class="dl-sec">${c.prop_nome||'—'}</div>
+      <div class="dl-sec">${c.inq_nome||'—'}</div>
+      <div class="dl-mo">${fmt(parseFloat(c.cont_aluguel)||0)}</div>
+      <div>${isAtivo(c)?'<span class="tag tag-gn">Ativo</span>':'<span class="tag tag-am">Encerrado</span>'}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTRATO FORM
+// ═══════════════════════════════════════════════════════════
+function novoContrato() {
+  S.idx=null;
+  CAMPOS.forEach(f=>{const el=document.getElementById(f);if(el){el.value='';delete el.dataset.iso;}});
+  document.getElementById('cont_fim').value='';
+  document.getElementById('vigCard').style.display='none';
+  document.getElementById('btnExc').style.display='none';
+  document.getElementById('tbTitle').textContent='Novo contrato';
+  document.getElementById('tbSub').textContent='Preencha os dados';
+  showPage('contrato');
+  goTab(0);
+}
+
+function abrirContrato(i) {
+  S.idx=i;
+  const c=S.contratos[i];
+  CAMPOS.forEach(f=>{const el=document.getElementById(f);if(el) el.value=c[f]||'';});
+  if(c._fimIso){const el=document.getElementById('cont_fim');el.value=fmtD(c._fimIso);el.dataset.iso=c._fimIso;}
+  calcFim();
+  document.getElementById('btnExc').style.display='inline-flex';
+  document.getElementById('tbTitle').textContent=cod(i);
+  toggleGarantiaValor();
+  preencherCamposImovel(S.contratos[i]);
+  syncFromContrato(S.contratos[i]);
+  // migrate legacy fields to _props/_inqs if needed
+  if (!S.contratos[i]._props) { const c=S.contratos[i]; S.contratos[i]._props=[{...novaParte('prop',0),nome:c.prop_nome||'',cpf:c.prop_cpf||'',email:c.prop_email||'',tel:c.prop_tel||'',banco:c.prop_banco||''}]; } if (!S.contratos[i]._inqs) { const c=S.contratos[i]; S.contratos[i]._inqs=[{...novaParte('inq',0),nome:c.inq_nome||'',cpf:c.inq_cpf||'',email:c.inq_email||'',tel:c.inq_tel||''  }]; }
+  document.getElementById('tbSub').textContent=(c.imovel_end||'')+(c.prop_nome?' — '+c.prop_nome:'');
+  populateYears();
+  showPage('contrato');
+  goTab(0);
+}
+
+function salvarContrato() {
+  const c={};
+  CAMPOS.forEach(f=>{const el=document.getElementById(f);if(el) c[f]=el.value;});
+  c._fimIso=document.getElementById('cont_fim').dataset.iso||'';
+  if(!c.prop_nome&&!c.imovel_end){alert('Preencha o nome da proprietária e o endereço.');return;}
+  syncHiddenFields(c); if(S.idx!==null){S.contratos[S.idx]=c;}
+  else{S.contratos.push(c);S.idx=S.contratos.length-1;document.getElementById('btnExc').style.display='inline-flex';}
+  save();alert('Contrato salvo!');
+}
+
+function pedirExcluir(){openMo('moExc');}
+function confirmarExcluir(){
+  if(S.idx===null)return;
+  const p=S.idx+'_',fp='fin_'+S.idx+'_';
+  Object.keys(S.lancs).filter(k=>k.startsWith(p)||k.startsWith(fp)).forEach(k=>delete S.lancs[k]);
+  S.contratos.splice(S.idx,1);S.idx=null;save();closeMo('moExc');showPage('dashboard');
+}
+
+function calcFim(){
+  const ini=document.getElementById('cont_inicio').value;
+  const dur=parseInt(document.getElementById('cont_dur').value);
+  const card=document.getElementById('vigCard');
+  if(!ini||!dur||dur<1){document.getElementById('cont_fim').value='';card.style.display='none';return;}
+  const d=new Date(ini+'T12:00:00');d.setMonth(d.getMonth()+dur);d.setDate(d.getDate()-1);
+  const iso=d.toISOString().slice(0,10);
+  document.getElementById('cont_fim').value=fmtD(iso);
+  document.getElementById('cont_fim').dataset.iso=iso;
+  const hoje=new Date().toISOString().slice(0,10);
+  document.getElementById('rv-ini').textContent=fmtD(ini);
+  document.getElementById('rv-fim').textContent=fmtD(iso);
+  document.getElementById('rv-dur').textContent=dur+' meses';
+  document.getElementById('rv-sit').innerHTML=iso>=hoje?'<span class="tag tag-gn">Ativo</span>':'<span class="tag tag-am">Encerrado</span>';
+  card.style.display='block';
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// REAJUSTES
+// ═══════════════════════════════════════════════════════════
+function renderReajustes() {
+  const c = C();
+  const alugInicial = parseFloat(c.cont_aluguel) || 0;
+  const reajustes = c._reajustes || [];
+
+  // Valor vigente = último reajuste aplicado ou aluguel inicial
+  const vigente = reajustes.length > 0
+    ? reajustes[reajustes.length - 1].novoValor
+    : alugInicial;
+  const vigenteDe = reajustes.length > 0
+    ? 'A partir de ' + fmtD(reajustes[reajustes.length - 1].data)
+    : 'Valor inicial do contrato';
+
+  document.getElementById('raj_inicial').textContent = fmt(alugInicial);
+  document.getElementById('raj_vigente').textContent = fmt(vigente);
+  document.getElementById('raj_vigente_desde').textContent = vigenteDe;
+
+  // Set index to match contract
+  const sel = document.getElementById('raj_indice');
+  if (sel && c.cont_indice) sel.value = c.cont_indice;
+
+  // Render history
+  const hist = document.getElementById('rajHistorico');
+  if (!reajustes.length) {
+    hist.innerHTML = '<p style="color:var(--text3);font-size:13px;padding:8px 0;">Nenhum reajuste aplicado ainda.</p>';
+    return;
+  }
+
+  hist.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);background:var(--surface2);">
+        <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Data</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Índice</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Mês reajuste</th>
+        <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">%</th>
+        <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Valor anterior</th>
+        <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Valor reajustado</th>
+        <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);">Variação</th>
+        <th style="padding:8px 10px;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${reajustes.map((r,i) => `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px;white-space:nowrap;">${fmtD(r.data)}</td>
+        <td style="padding:10px;"><span class="tag tag-ac">${r.indice}</span></td>
+        <td style="padding:10px;color:var(--text2);white-space:nowrap;">${r.periodo||'—'}</td>
+        <td style="padding:10px;text-align:right;font-family:var(--mono);">${r.percentual.toFixed(2)}%</td>
+        <td style="padding:10px;text-align:right;font-family:var(--mono);color:var(--text2);">${fmt(r.valorAnterior)}</td>
+        <td style="padding:10px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--green);">${fmt(r.novoValor)}</td>
+        <td style="padding:10px;text-align:right;font-family:var(--mono);color:var(--green);font-size:12px;">+${fmt(r.novoValor - r.valorAnterior)}</td>
+        <td style="padding:10px;"><button class="btn btn-sm btn-d" onclick="excluirReajuste(${i})">Rem.</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function calcularReajuste() {
+  const c = C();
+  if (!c || !c.cont_aluguel) { alert('Abra um contrato primeiro.'); return; }
+  const reajustes = c._reajustes || [];
+  const valorBase = reajustes.length > 0
+    ? parseFloat(reajustes[reajustes.length - 1].novoValor)
+    : (parseFloat(c.cont_aluguel) || 0);
+  const percStr = document.getElementById('raj_percentual').value;
+  const perc = parseFloat(percStr.replace(',','.'));
+  if (!percStr || isNaN(perc)) { alert('Informe o percentual do índice (ex: 4.62).'); return; }
+  const novoValor = Math.round(valorBase * (1 + perc / 100) * 100) / 100;
+  const el = document.getElementById('raj_novo_valor');
+  el.value = fmt(novoValor);
+  el.dataset.raw = novoValor;
+  return novoValor;
+}
+
+function aplicarReajuste() {
+  const c = C();
+  if (!c.cont_aluguel) { alert('Salve o contrato primeiro.'); return; }
+  const reajustes = c._reajustes || [];
+  const valorBase = reajustes.length > 0
+    ? reajustes[reajustes.length - 1].novoValor
+    : (parseFloat(c.cont_aluguel) || 0);
+  const perc = parseFloat(document.getElementById('raj_percentual').value);
+  const data = document.getElementById('raj_data').value;
+  const indice = document.getElementById('raj_indice').value;
+  const periodo = document.getElementById('raj_periodo').value;
+
+  if (!perc || isNaN(perc)) { alert('Informe o percentual do índice.'); return; }
+  if (!data) { alert('Informe a data de vigência do reajuste.'); return; }
+
+  const novoValorEl = document.getElementById('raj_novo_valor');
+  const novoValor = parseFloat(novoValorEl.dataset.raw) || Math.round(valorBase * (1 + perc / 100) * 100) / 100;
+
+  const reajuste = {
+    data, indice, periodo,
+    percentual: perc,
+    valorAnterior: valorBase,
+    novoValor: novoValor
+  };
+
+  if (!c._reajustes) c._reajustes = [];
+  c._reajustes.push(reajuste);
+
+  // Update vigente fields
+  c.cont_aluguel_vigente = String(reajuste.novoValor);
+  c.cont_aluguel_vigente_desde = data;
+
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+
+  // Clear fields
+  document.getElementById('raj_percentual').value = '';
+  document.getElementById('raj_data').value = '';
+  document.getElementById('raj_periodo').value = '';
+  document.getElementById('raj_novo_valor').value = '';
+
+  renderReajustes();
+  alert('Reajuste aplicado! Novo valor: ' + fmt(reajuste.novoValor));
+}
+
+function excluirReajuste(i) {
+  if (!confirm('Remover este reajuste?')) return;
+  const c = C();
+  c._reajustes.splice(i, 1);
+  // Recalculate vigente
+  if (c._reajustes.length > 0) {
+    c.cont_aluguel_vigente = String(c._reajustes[c._reajustes.length-1].novoValor);
+    c.cont_aluguel_vigente_desde = c._reajustes[c._reajustes.length-1].data;
+  } else {
+    c.cont_aluguel_vigente = '';
+    c.cont_aluguel_vigente_desde = '';
+  }
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderReajustes();
+}
+
+// Helper: get current rent value (reajusted if available, else original)
+function getAluguelVigente(c) {
+  if (c._reajustes && c._reajustes.length > 0) {
+    return c._reajustes[c._reajustes.length - 1].novoValor;
+  }
+  return parseFloat(c.cont_aluguel) || 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LANÇAMENTOS
+// ═══════════════════════════════════════════════════════════
+let lancMes = new Date().getMonth() + 1;
+let lancAno = new Date().getFullYear();
+let lancEditIdx = null;
+
+function lancKey2(mes, ano) { return lKey(mes, ano); }
+function ensLKey(k){ if(!S.lancs[k]) S.lancs[k]={items:[],dInq:[],cInq:[],dProp:[],cProp:[]}; }
+function curLKey(){ return lancKey2(lancMes, lancAno); }
+
+// Tipos cuja referência de cobrança segue o regime do contrato (Vencido/A vencer)
+const TIPOS_MES_ANTERIOR = ['Aluguel','Água','Luz','Gás'];
+
+function getContratoModelo(c) {
+  if (!c._modeloFixos) c._modeloFixos = [];
+  return c._modeloFixos;
+}
+
+function refMesAnterior(mes, ano) {
+  let m = mes - 1, a = ano;
+  if (m === 0) { m = 12; a--; }
+  return { mes: m, ano: a };
+}
+
+function refMesSeguinte(mes, ano) {
+  let m = mes + 1, a = ano;
+  if (m === 13) { m = 1; a++; }
+  return { mes: m, ano: a };
+}
+
+// Retorna a referência de cobrança (mês a que se refere o pagamento) dado o regime do contrato
+function getReferenciaCobranca(mes, ano, regime) {
+  // 'vencido'  = paga pelo mês que passou (referência = mês anterior ao pagamento)
+  // 'a_vencer' = paga pelo mês que vem    (referência = o próprio mês do pagamento)
+  if (regime === 'a_vencer') return { mes, ano };
+  return refMesAnterior(mes, ano);
+}
+
+// ── Cálculo proporcional (base 30 dias) ─────────────────────
+// dataEntrada: 'YYYY-MM-DD', valorMensal: número, diaVencContrato: dia de vencimento padrão
+// Retorna { dias, valor, periodoTexto }
+function calcularProporcional(dataEntrada, valorMensal) {
+  if (!dataEntrada || !valorMensal) return null;
+  const [ano, mes, dia] = dataEntrada.split('-').map(Number);
+  const diasNoMesBase = 30;
+  // Dias restantes do mês de entrada, contando o próprio dia de entrada, com base em mês de 30 dias
+  const diasUsados = diasNoMesBase - dia + 1;
+  const diasCobrados = Math.max(0, Math.min(diasUsados, diasNoMesBase));
+  const valorDiaria = valorMensal / diasNoMesBase;
+  const valorProporcional = Math.round(valorDiaria * diasCobrados * 100) / 100;
+
+  // Texto do período: do dia de entrada até o fim do mês (dia 30, base 30 dias)
+  const dataFimStr = `${String(diasNoMesBase).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`;
+  const dataIniStr = `${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`;
+
+  return {
+    dias: diasCobrados,
+    valorDiaria: Math.round(valorDiaria * 100) / 100,
+    valor: valorProporcional,
+    periodoTexto: `${dataIniStr} a ${dataFimStr} (${diasCobrados} dias, base 30)`,
+  };
+}
+
+function renderLancs() {
+  renderMesesBar();
+  renderLancTable();
+  renderLancTotais();
+  const c = C();
+  const el = document.getElementById('lancSituacao');
+  if (el) el.textContent = 'Situação: ' + (c && c.cont_fim_iso && c.cont_fim_iso < new Date().toISOString().slice(0,10) ? 'Encerrado' : 'Ativo');
+}
+
+function renderMesesBar() {
+  const bar = document.getElementById('mesesBar');
+  if (!bar) return;
+  const MESES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  bar.innerHTML = MESES_ABR.map((m,i) => {
+    return `<button class="mes-btn ${i+1===lancMes?'active':''}" onclick="setMes(${i+1})">${m}/${String(lancAno).slice(2)}</button>`;
+  }).join('');
+}
+
+function setMes(m) {
+  lancMes = m;
+  renderLancs();
+}
+
+function navMes(dir) {
+  lancMes += dir;
+  if (lancMes > 12) { lancMes = 1; lancAno++; }
+  if (lancMes < 1)  { lancMes = 12; lancAno--; }
+  renderLancs();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODELO DE DESPESAS FIXAS (template por contrato)
+// ═══════════════════════════════════════════════════════════
+function abrirModeloFixos() {
+  const c = C();
+  if (!c) { alert('Abra um contrato primeiro.'); return; }
+  renderModeloTable();
+  openMo('modalModelo');
+}
+
+function renderModeloTable() {
+  const c = C();
+  const modelo = getContratoModelo(c);
+  const tbody = document.getElementById('modeloBody');
+  if (!tbody) return;
+
+  if (!modelo.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">
+      Nenhuma despesa fixa cadastrada. Clique em <strong>+ Adicionar despesa</strong>.
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = modelo.map((it,i) => `
+    <tr class="lanc-row">
+      <td style="padding:8px 10px;font-size:13px;">${it.hist||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text2);">${it.tipo||'—'}</td>
+      <td style="padding:8px 10px;text-align:center;"><span class="${it.pago==='sim'?'pago-sim':'pago-nao'}">${it.pago==='sim'?'Sim':'Não'}</span></td>
+      <td style="padding:8px 10px;text-align:center;">${it.dc_prop?`<span class="dc-badge dc-${it.dc_prop.replace('/','')}">${it.dc_prop}</span>`:'—'}</td>
+      <td style="padding:8px 10px;text-align:center;">${it.dc_inq?`<span class="dc-badge dc-${it.dc_inq.replace('/','')}">${it.dc_inq}</span>`:'—'}</td>
+      <td style="padding:8px 10px;text-align:center;font-size:12px;color:var(--text2);">Dia ${it.diaVenc||'—'}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-weight:500;">${fmt(it.valor||0)}</td>
+      <td style="padding:8px 10px;">
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" onclick="abrirModalModeloItem(${i})" title="Editar">✏️</button>
+          <button class="btn btn-sm btn-d" onclick="removerModeloItem(${i})" title="Excluir">×</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalModeloItem(idx) {
+  modeloEditIdx = idx;
+  const c = C();
+  const modelo = getContratoModelo(c);
+  const it = idx !== null ? modelo[idx] : null;
+  document.getElementById('mm_hist').value = it ? it.hist||'' : '';
+  populateSelectCats('mm_tipo', it ? it.tipo||'Condomínio ordinário' : 'Condomínio ordinário');
+  document.getElementById('mm_valor').value = it ? it.valor||'' : '';
+  document.getElementById('mm_dia').value = it ? it.diaVenc||'' : '';
+  document.getElementById('mm_pago').value = it ? it.pago||'nao' : 'nao';
+  document.getElementById('mm_dc_prop').value = it ? it.dc_prop||'' : '';
+  document.getElementById('mm_dc_inq').value = it ? it.dc_inq||'' : '';
+  openMo('modalModeloItem');
+}
+
+let modeloEditIdx = null;
+
+function salvarModeloItem() {
+  const c = C();
+  const modelo = getContratoModelo(c);
+  const item = {
+    hist: document.getElementById('mm_hist').value,
+    tipo: document.getElementById('mm_tipo').value,
+    valor: parseFloat(document.getElementById('mm_valor').value)||0,
+    diaVenc: document.getElementById('mm_dia').value,
+    pago: document.getElementById('mm_pago').value,
+    dc_prop: document.getElementById('mm_dc_prop').value,
+    dc_inq: document.getElementById('mm_dc_inq').value,
+  };
+  if (!item.hist) { alert('Preencha o histórico.'); return; }
+
+  // Validação: não permitir duplicidade (mesmo histórico/tipo no modelo)
+  const duplicado = modelo.some((m,i) => i !== modeloEditIdx && m.hist.trim().toLowerCase() === item.hist.trim().toLowerCase() && m.tipo === item.tipo);
+  if (duplicado) { alert('Já existe uma despesa fixa com este histórico e tipo. Edite a existente ou use um nome diferente.'); return; }
+
+  if (modeloEditIdx !== null) modelo[modeloEditIdx] = item;
+  else modelo.push(item);
+
+  c._modeloFixos = modelo;
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  closeMo('modalModeloItem');
+  renderModeloTable();
+}
+
+function removerModeloItem(i) {
+  if (!confirm('Remover esta despesa do modelo? Os lançamentos já gerados em meses anteriores não serão afetados.')) return;
+  const c = C();
+  const modelo = getContratoModelo(c);
+  modelo.splice(i,1);
+  c._modeloFixos = modelo;
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderModeloTable();
+}
+
+function fecharModeloEAtualizar() {
+  closeMo('modalModelo');
+  renderLancs();
+}
+
+// ── Calculadora de proporcional (uso manual, ex: rescisão) ──
+function calcularProporcionalModal() {
+  const data = document.getElementById('pp_data').value;
+  const valor = parseFloat(document.getElementById('pp_valor').value);
+  const el = document.getElementById('pp_resultado');
+  if (!data || !valor) {
+    el.innerHTML = '<p style="color:var(--red);font-size:13px;">Informe a data e o valor mensal.</p>';
+    return;
+  }
+  const r = calcularProporcional(data, valor);
+  if (!r) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div style="background:var(--green-lt);border-radius:var(--rsm);padding:14px;">
+      <div class="m-label">Período</div>
+      <div style="font-size:13px;margin-bottom:8px;">${r.periodoTexto}</div>
+      <div class="m-label">Valor da diária (base 30 dias)</div>
+      <div style="font-size:13px;margin-bottom:8px;font-family:var(--mono);">${fmt(r.valorDiaria)}</div>
+      <div class="m-label">Valor proporcional</div>
+      <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--green);">${fmt(r.valor)}</div>
+    </div>
+    <button class="btn btn-p btn-sm" style="margin-top:10px;" onclick="usarProporcionalComoLancamento(${r.valor}, '${r.periodoTexto.replace(/'/g,"\\'")}')">Usar este valor em um lançamento</button>
+  `;
+}
+
+function usarProporcionalComoLancamento(valor, periodoTexto) {
+  closeMo('modalProporcional');
+  abrirModalLanc(null);
+  document.getElementById('ml_hist').value = `Aluguel proporcional — ${periodoTexto}`;
+  populateSelectCats('ml_tipo', 'Aluguel');
+  document.getElementById('ml_valor').value = valor;
+  document.getElementById('ml_dc_prop').value = 'C';
+  document.getElementById('ml_dc_inq').value = 'D';
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-POPULAÇÃO MENSAL (a partir do modelo)
+// ═══════════════════════════════════════════════════════════
+function autoPopularMes(k) {
+  ensLKey(k);
+  const d = S.lancs[k];
+  const c = C();
+  const alug = getAluguelVigente(c);
+  const partes = k.split('_')[1].split('-');
+  const ano = parseInt(partes[0]);
+  const mes = parseInt(partes[1]);
+  const regime = c.cont_regime || 'vencido';
+
+  if (!d.items) d.items = [];
+  if (!d._removidos) d._removidos = [];
+
+  const foiRemovido = (hist, tipo) => d._removidos.some(r => r.hist === hist && r.tipo === tipo);
+  const mkVenc = (dia) => dia ? `${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}` : '';
+
+  // 1. Aluguel automático — referência segue o regime do contrato (Vencido/A vencer)
+  const ref = getReferenciaCobranca(mes, ano, regime);
+
+  // Verifica se este mês de referência é o mês de entrada do contrato (1º aluguel = proporcional)
+  let valorAluguel = alug;
+  let histAluguel = `Aluguel — ref. ${MESES[ref.mes-1]}/${ref.ano}`;
+
+  if (c.cont_inicio) {
+    const [aIni, mIni, dIni] = c.cont_inicio.split('-').map(Number);
+    const ehMesDeEntrada = (ref.ano === aIni && ref.mes === mIni && dIni > 1);
+    if (ehMesDeEntrada) {
+      const prop = calcularProporcional(c.cont_inicio, alug);
+      if (prop) {
+        valorAluguel = prop.valor;
+        histAluguel = `Aluguel proporcional — ref. ${MESES[ref.mes-1]}/${ref.ano} (${prop.periodoTexto})`;
+      }
+    }
+  }
+
+  const temAluguel = d.items.some(it => it.tipo === 'Aluguel');
+  if (!temAluguel && valorAluguel > 0 && !foiRemovido(histAluguel, 'Aluguel')) {
+    d.items.unshift({
+      hist: histAluguel,
+      tipo: 'Aluguel',
+      valor: valorAluguel,
+      venc: mkVenc(c.cont_venc),
+      pago: 'nao',
+      dc_prop: 'C',
+      dc_inq: 'D',
+      fixo: false,
+      _auto: true,
+    });
+  }
+
+  // 2. Despesas fixas do modelo do contrato
+  const modelo = getContratoModelo(c);
+  modelo.forEach(fix => {
+    const usaRegime = TIPOS_MES_ANTERIOR.includes(fix.tipo);
+    const refItem = usaRegime ? getReferenciaCobranca(mes, ano, regime) : { mes, ano };
+    const histFinal = usaRegime
+      ? `${fix.hist} — ref. ${MESES[refItem.mes-1]}/${refItem.ano}`
+      : `${fix.hist} — ${MESES[mes-1]}/${ano}`;
+
+    const jatem = d.items.some(it => it.tipo === fix.tipo && it.hist.indexOf(fix.hist) === 0);
+    if (!jatem && !foiRemovido(histFinal, fix.tipo)) {
+      d.items.push({
+        hist: histFinal,
+        tipo: fix.tipo,
+        valor: fix.valor,
+        venc: mkVenc(fix.diaVenc),
+        pago: fix.pago || 'nao',
+        dc_prop: fix.dc_prop,
+        dc_inq: fix.dc_inq,
+        fixo: true,
+        _auto: true,
+      });
+    }
+  });
+}
+
+function renderLancTable() {
+  const k = curLKey();
+  ensLKey(k);
+  const d = S.lancs[k];
+
+  // Migrate old format if needed
+  if (!d.items && (d.dInq||d.cInq||d.dProp||d.cProp)) {
+    d.items = [];
+    (d.dInq||[]).forEach(it => d.items.push({hist:it.desc||it.cat,tipo:it.cat,valor:parseFloat(it.val)||0,venc:it.ref||'',pago:'nao',dc_prop:'D',dc_inq:'D'}));
+    (d.cInq||[]).forEach(it => d.items.push({hist:it.desc||it.cat,tipo:it.cat,valor:parseFloat(it.val)||0,venc:it.ref||'',pago:'nao',dc_prop:'',dc_inq:'C'}));
+    (d.dProp||[]).forEach(it => d.items.push({hist:it.desc||it.cat,tipo:it.cat,valor:parseFloat(it.val)||0,venc:it.ref||'',pago:'nao',dc_prop:'D',dc_inq:''}));
+    (d.cProp||[]).forEach(it => d.items.push({hist:it.desc||it.cat,tipo:it.cat,valor:parseFloat(it.val)||0,venc:it.ref||'',pago:'nao',dc_prop:'C',dc_inq:''}));
+  }
+
+  autoPopularMes(k);
+
+  const items = S.lancs[k].items || [];
+  const tbody = document.getElementById('lancBody');
+  if (!tbody) return;
+
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;font-size:13px;">
+      Nenhum lançamento em ${MESES[lancMes-1]}/${lancAno}. Clique em <strong>+ Novo lançamento</strong> ou configure as <strong>despesas fixas</strong>.
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = items.map((it,i) => `
+    <tr class="lanc-row">
+      <td style="padding:9px 10px;font-size:13px;">${it.hist||'—'} ${it.fixo?'<span style="font-size:10px;background:var(--accent-lt);color:var(--accent);padding:1px 5px;border-radius:3px;margin-left:4px;">Fixo</span>':''} ${it._auto?'<span style="font-size:10px;background:var(--surface2);color:var(--text3);padding:1px 5px;border-radius:3px;margin-left:4px;">Auto</span>':''}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text2);">${it.tipo||'—'}</td>
+      <td style="padding:9px 10px;text-align:center;"><span class="${it.pago==='sim'?'pago-sim':'pago-nao'}">${it.pago==='sim'?'Sim':'Não'}</span></td>
+      <td style="padding:9px 10px;text-align:center;">${it.dc_prop?`<span class="dc-badge dc-${it.dc_prop.replace('/','')}">${it.dc_prop}</span>`:'—'}</td>
+      <td style="padding:9px 10px;text-align:center;">${it.dc_inq?`<span class="dc-badge dc-${it.dc_inq.replace('/','')}">${it.dc_inq}</span>`:'—'}</td>
+      <td style="padding:9px 10px;text-align:center;font-size:12px;color:var(--text2);">${it.venc?fmtD(it.venc):'—'}</td>
+      <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-weight:500;">${fmt(it.valor||0)}</td>
+      <td style="padding:9px 10px;">
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" onclick="abrirModalLanc(${i})" title="Editar">✏️</button>
+          <button class="btn btn-sm btn-d" onclick="remLancItem(${i})" title="Excluir">×</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function renderLancTotais() {
+  const k = curLKey(); ensLKey(k);
+  const items = S.lancs[k].items || [];
+  const totD_prop = items.filter(i=>i.dc_prop==='D'||i.dc_prop==='D/C').reduce((s,i)=>s+(i.valor||0),0);
+  const totC_prop = items.filter(i=>i.dc_prop==='C'||i.dc_prop==='D/C').reduce((s,i)=>s+(i.valor||0),0);
+  const totD_inq  = items.filter(i=>i.dc_inq==='D'||i.dc_inq==='D/C').reduce((s,i)=>s+(i.valor||0),0);
+  const totC_inq  = items.filter(i=>i.dc_inq==='C'||i.dc_inq==='D/C').reduce((s,i)=>s+(i.valor||0),0);
+  const el = document.getElementById('lancTotais');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="metric" style="padding:10px 14px;">
+      <div class="m-label">Déb. Proprietária</div>
+      <div style="font-size:15px;font-weight:600;font-family:var(--mono);color:var(--red);">${fmt(totD_prop)}</div>
+    </div>
+    <div class="metric" style="padding:10px 14px;">
+      <div class="m-label">Créd. Proprietária</div>
+      <div style="font-size:15px;font-weight:600;font-family:var(--mono);color:var(--green);">${fmt(totC_prop)}</div>
+    </div>
+    <div class="metric" style="padding:10px 14px;">
+      <div class="m-label">Déb. Inquilino</div>
+      <div style="font-size:15px;font-weight:600;font-family:var(--mono);color:var(--red);">${fmt(totD_inq)}</div>
+    </div>
+    <div class="metric" style="padding:10px 14px;">
+      <div class="m-label">Créd. Inquilino</div>
+      <div style="font-size:15px;font-weight:600;font-family:var(--mono);color:var(--green);">${fmt(totC_inq)}</div>
+    </div>`;
+}
+
+function abrirModalLanc(idx) {
+  lancEditIdx = idx;
+  const k = curLKey(); ensLKey(k);
+  const items = S.lancs[k].items || [];
+  const it = idx !== null ? items[idx] : null;
+  document.getElementById('modalLancTitle').textContent = idx !== null ? 'Editar lançamento' : 'Novo lançamento';
+  document.getElementById('ml_hist').value  = it ? it.hist||'' : '';
+  populateSelectCats('ml_tipo', it ? it.tipo||'Aluguel' : 'Aluguel');
+  document.getElementById('ml_valor').value = it ? it.valor||'' : '';
+  document.getElementById('ml_venc').value  = it ? it.venc||'' : '';
+  document.getElementById('ml_pago').value  = it ? it.pago||'nao' : 'nao';
+  document.getElementById('ml_dc_prop').value = it ? it.dc_prop||'' : '';
+  document.getElementById('ml_dc_inq').value  = it ? it.dc_inq||'' : '';
+  document.getElementById('ml_fixo').checked  = it ? it.fixo===true : false;
+  openMo('modalLanc');
+}
+
+function salvarModalLanc() {
+  const k = curLKey(); ensLKey(k);
+  if (!S.lancs[k].items) S.lancs[k].items = [];
+  const item = {
+    hist:  document.getElementById('ml_hist').value,
+    tipo:  document.getElementById('ml_tipo').value,
+    valor: parseFloat(document.getElementById('ml_valor').value)||0,
+    venc:  document.getElementById('ml_venc').value,
+    pago:  document.getElementById('ml_pago').value,
+    dc_prop: document.getElementById('ml_dc_prop').value,
+    dc_inq:  document.getElementById('ml_dc_inq').value,
+    fixo:  document.getElementById('ml_fixo').checked,
+  };
+  if (!item.hist) { alert('Preencha o histórico.'); return; }
+
+  // Validação anti-duplicidade: mesmo histórico + tipo + vencimento no mesmo mês
+  const items = S.lancs[k].items;
+  const duplicado = items.some((it,idx) =>
+    idx !== lancEditIdx &&
+    it.hist.trim().toLowerCase() === item.hist.trim().toLowerCase() &&
+    it.tipo === item.tipo &&
+    it.venc === item.venc
+  );
+  if (duplicado) {
+    alert('Já existe um lançamento com este histórico, tipo e data de vencimento neste mês. Edite o lançamento existente em vez de duplicá-lo.');
+    return;
+  }
+
+  if (lancEditIdx !== null) S.lancs[k].items[lancEditIdx] = item;
+  else S.lancs[k].items.push(item);
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  closeMo('modalLanc');
+  renderLancs();
+}
+
+function remLancItem(i) {
+  if (!confirm('Excluir este lançamento?')) return;
+  const k = curLKey(); ensLKey(k);
+  const item = S.lancs[k].items[i];
+  if (!S.lancs[k]._removidos) S.lancs[k]._removidos = [];
+  S.lancs[k]._removidos.push({ hist: item.hist, tipo: item.tipo });
+  S.lancs[k].items.splice(i,1);
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderLancs();
+}
+
+function salvarLanc(){ if (window.saveCloud) { window.saveCloud(); } else { save(); } alert('Lançamentos salvos!'); }
+
+// Keep compatibility functions
+function addLanc(tipo){}
+function remL(k,tipo,i){}
+function updL(k,tipo,i,f,v){}
+
+// ═══════════════════════════════════════════════════════════
+// EXTRATO INQUILINO
+// ═══════════════════════════════════════════════════════════
+function renderExtInq(){
+  const mes=+document.getElementById('ei_mes').value,ano=+document.getElementById('ei_ano').value;
+  const k=lKey(mes,ano); const c=C();
+  const d=S.lancs[k]||{items:[]};
+  const items = d.items || [];
+
+  // Get inq items: dc_inq=D are debits (charges), dc_inq=C are credits
+  const debInq  = items.filter(it=>it.dc_inq==='D'||it.dc_inq==='D/C');
+  const credInq = items.filter(it=>it.dc_inq==='C');
+
+  const total = debInq.reduce((s,it)=>s+(it.valor||0),0) - credInq.reduce((s,it)=>s+(it.valor||0),0);
+
+  // Mês de referência é o mês anterior (inquilino mora e depois paga)
+  let refMes = mes - 1, refAno = ano;
+  if (refMes === 0) { refMes = 12; refAno--; }
+  const imovelEnd = [c.imovel_rua, c.imovel_num ? 'nº '+c.imovel_num : '', c.imovel_apto, c.imovel_bairro].filter(Boolean).join(', ') || c.imovel_end || '—';
+  const imovelCid = [c.imovel_cidade, c.imovel_uf].filter(Boolean).join(' / ') || '';
+  const imovelCep = c.imovel_cep ? 'CEP ' + c.imovel_cep : '';
+
+  let h=`<div class="ext-head">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:10px;opacity:.6;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Demonstrativo de Cobrança</div>
+        <h2 style="font-size:17px;font-weight:700;">${c.inq_nome||'—'}</h2>
+        <div style="font-size:12px;opacity:.8;margin-top:2px;">CPF: ${c.inq_cpf||'—'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;opacity:.6;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Referência</div>
+        <div style="font-size:15px;font-weight:600;">${MESES[refMes-1]} / ${refAno}</div>
+        <div style="font-size:11px;opacity:.7;">Vencimento: dia ${c.cont_venc||'—'} de ${MESES[mes-1]}/${ano}</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;opacity:.8;">
+      📍 ${imovelEnd}${imovelCid?' — '+imovelCid:''}${imovelCep?' · '+imovelCep:''}
+    </div>
+  </div>
+  <div class="ext-body">`;
+
+  debInq.forEach(it=>{
+    h+=`<div class="ext-row"><span>${it.hist||it.tipo||'—'}</span><span class="ext-val">${fmt(it.valor||0)}</span></div>`;
+  });
+  credInq.forEach(it=>{
+    h+=`<div class="ext-row cr"><span>Crédito: ${it.hist||it.tipo||'—'}</span><span class="ext-val">− ${fmt(it.valor||0)}</span></div>`;
+  });
+
+  if (!items.length) {
+    h+=`<div class="ext-row"><span style="color:var(--text3);">Nenhum lançamento em ${MESES[mes-1]}/${ano}. Acesse a aba Lançamentos.</span><span></span></div>`;
+  }
+
+  h+=`<div class="ext-row tot"><span>TOTAL A PAGAR</span><span class="ext-val" style="color:var(--accent);font-size:16px;">${fmt(total)}</span></div></div>
+  <p style="font-size:11px;color:var(--text3);margin-top:10px;">Proprietária: ${c.prop_nome||'—'} · CPF: ${c.prop_cpf||'—'}</p>`;
+  document.getElementById('extInqOut').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPASSE PROPRIETÁRIA
+// ═══════════════════════════════════════════════════════════
+function renderExtProp(){
+  const mes=+document.getElementById('ep_mes').value,ano=+document.getElementById('ep_ano').value;
+  const k=lKey(mes,ano); const c=C();
+  const d=S.lancs[k]||{items:[]};
+  const items = d.items || [];
+
+  // Prop: dc_prop=C are credits (receitas), dc_prop=D are debits (despesas)
+  const credProp = items.filter(it=>it.dc_prop==='C'||it.dc_prop==='D/C');
+  const debProp  = items.filter(it=>it.dc_prop==='D'||it.dc_prop==='D/C');
+
+  const totalCred = credProp.reduce((s,it)=>s+(it.valor||0),0);
+  const totalDeb  = debProp.reduce((s,it)=>s+(it.valor||0),0);
+  const repasse = totalCred - totalDeb;
+
+  let h=`<div class="ext-head"><h2>Demonstrativo de Repasse — Proprietária</h2><p>${MESES[mes-1]} / ${ano}</p></div>
+  <div class="ext-body">
+  <div class="ext-row hd"><span style="font-size:11px;">PROPRIETÁRIA</span><span style="font-size:12px;">${c.prop_nome||'—'} · CPF: ${c.prop_cpf||'—'}</span></div>
+  <div class="ext-row hd"><span style="font-size:11px;">BANCO</span><span style="font-size:12px;">${c.prop_banco||'—'}</span></div>`;
+
+  credProp.forEach(it=>{
+    h+=`<div class="ext-row"><span>${it.hist||it.tipo||'—'}</span><span class="ext-val">${fmt(it.valor||0)}</span></div>`;
+  });
+  debProp.forEach(it=>{
+    h+=`<div class="ext-row db"><span>${it.hist||it.tipo||'—'}</span><span class="ext-val">− ${fmt(it.valor||0)}</span></div>`;
+  });
+
+  if (!items.length) {
+    h+=`<div class="ext-row"><span style="color:var(--text3);">Nenhum lançamento em ${MESES[mes-1]}/${ano}. Acesse a aba Lançamentos.</span><span></span></div>`;
+  }
+
+  h+=`<div class="ext-row tot"><span>REPASSE LÍQUIDO</span><span class="ext-val" style="color:var(--green);font-size:16px;">${fmt(repasse)}</span></div></div>
+  <p style="font-size:11px;color:var(--text3);margin-top:10px;">Inquilino: ${c.inq_nome||'—'} · Imóvel: ${c.imovel_end||'—'}</p>`;
+  document.getElementById('extPropOut').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// INFORME IR
+// ═══════════════════════════════════════════════════════════
+function renderIR(){
+  const ano=+document.getElementById('ir_ano').value; const c=C();
+  const alug=parseFloat(c.cont_aluguel)||0,taxa=parseFloat(c.cont_taxa_adm)||0,taxaDe=c.cont_taxa_de||'proprietaria';
+  let meses=[],totB=0,totA=0,totI=0;
+  for(let m=1;m<=12;m++){
+    const k=lKey(m,ano); const d=S.lancs[k]; if(!d||!alug) continue;
+    const items2 = d.items || [];
+    const abat = items2.filter(it=>it.dc_prop==='D'&&it.tipo!=='Aluguel').reduce((s,it)=>s+(it.valor||0),0);
+    const base=Math.max(0,alug-abat); const {imp,aliq}=calcIR(base, ano);
+    totB+=alug;totA+=abat;totI+=imp;meses.push({m,alug,abat,base,imp,aliq});
+  }
+  const totL=totB-totA;
+  let h=`<div class="card" style="margin-bottom:14px;">
+    <div class="card-title">Proprietária — Ano-base ${ano}</div>
+    <div style="font-size:13px;color:var(--text2);line-height:2;"><strong>${c.prop_nome||'—'}</strong> · CPF: ${c.prop_cpf||'—'}<br>
+    Imóvel: ${c.imovel_end||'—'} — ${c.imovel_cidade||''}${c.imovel_uf?'/'+c.imovel_uf:''}<br>
+    Inquilino: ${c.inq_nome||'—'} · CPF: ${c.inq_cpf||'—'}<br>
+    Ficha DIRPF: <strong>Rendimentos Tributáveis Recebidos de Pessoa Física — Código 21</strong></div></div>
+  <div class="metrics-strip" style="margin-bottom:14px;">
+    <div class="metric"><div class="m-label">Rend. bruto anual</div><div class="m-val ac" style="font-size:18px;">${fmt(totB)}</div></div>
+    <div class="metric"><div class="m-label">Abatimentos</div><div class="m-val" style="font-size:18px;">${fmt(totA)}</div></div>
+    <div class="metric"><div class="m-label">Líquido tributável</div><div class="m-val gn" style="font-size:18px;">${fmt(totL)}</div></div>
+    <div class="metric"><div class="m-label">Carnê-leão total</div><div class="m-val" style="font-size:18px;color:var(--red);">${fmt(totI)}</div></div>
+  </div>
+  <div class="card"><div class="card-title">Detalhamento mensal</div><div class="tw"><table>
+    <thead><tr><th>Mês</th><th class="r">Rend. bruto</th><th class="r">Abatimentos</th><th class="r">Base cálculo</th><th class="r">Alíquota</th><th class="r">Carnê-leão</th></tr></thead>
+    <tbody>`;
+  if(!meses.length)h+=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px;">Nenhum lançamento em ${ano}.</td></tr>`;
+  else meses.forEach(r=>{h+=`<tr><td>${MESES[r.m-1]}</td><td class="r mo">${fmt(r.alug)}</td><td class="r mo">${fmt(r.abat)}</td><td class="r mo">${fmt(r.base)}</td><td class="r"><span class="tag tag-rd">${(r.aliq*100).toFixed(1)}%</span></td><td class="r mo" style="color:var(--red);font-weight:500;">${fmt(r.imp)}</td></tr>`;});
+  h+=`</tbody><tfoot><tr><td>Total</td><td class="r mo">${fmt(totB)}</td><td class="r mo">${fmt(totA)}</td><td class="r mo">${fmt(totL)}</td><td></td><td class="r mo" style="color:var(--red);">${fmt(totI)}</td></tr></tfoot>
+  </table></div>
+  <p style="font-size:11px;color:var(--text3);margin-top:10px;">Vencimento do carnê-leão: até o último dia útil do mês seguinte ao do recebimento.</p>
+  </div>`;
+
+  // Tabela progressiva mensal do ano-base selecionado
+  const faixasAno = getFaixasPorAno(ano);
+  const labelsFaixas = [
+    `Até ${fmt(faixasAno[0][0])}`,
+    `${fmt(faixasAno[0][0]+0.01)} a ${fmt(faixasAno[1][0])}`,
+    `${fmt(faixasAno[1][0]+0.01)} a ${fmt(faixasAno[2][0])}`,
+    `${fmt(faixasAno[2][0]+0.01)} a ${fmt(faixasAno[3][0])}`,
+    `Acima de ${fmt(faixasAno[3][0])}`,
+  ];
+  let tabelaFaixasHtml = faixasAno.map((f,i) => `<tr>
+    <td>${labelsFaixas[i]}</td>
+    <td class="r">${f[1]===0?'Isento':(f[1]*100).toFixed(1)+'%'}</td>
+    <td class="r mo">${f[2]===0?'—':fmt(f[2])}</td>
+  </tr>`).join('');
+
+  h += `<div class="card">
+    <div class="card-title">Tabela Progressiva Mensal — Ano-base ${ano}${ano>=2026?' (Lei nº 15.270/2025 e MPV nº 1.294/2025)':''}</div>
+    <div class="tw"><table>
+      <thead><tr><th>Base de cálculo</th><th class="r">Alíquota</th><th class="r">Parcela a deduzir</th></tr></thead>
+      <tbody>${tabelaFaixasHtml}</tbody>
+    </table></div>
+    ${ano>=2026 ? `
+    <div class="alert alert-i" style="margin-top:12px;">
+      <strong>Redutor adicional 2026:</strong> rendimentos líquidos mensais até R$ 5.000,00 ficam isentos por meio de um redutor de até R$ 312,89 (limitado ao imposto apurado pela tabela). Entre R$ 5.000,01 e R$ 7.350,00, o redutor diminui gradualmente até zero. Acima de R$ 7.350,00, aplica-se a tabela normalmente, sem redutor. Esse redutor já está incluído no cálculo do carnê-leão acima.
+    </div>` : ''}
+  </div>`;
+
+  // ── Informe de pagamentos do inquilino ──
+  let totPagoInq = 0;
+  let linhasInq = '';
+  for(let m=1;m<=12;m++){
+    const k2=lKey(m,ano); const d2=S.lancs[k2];
+    if(!d2||!d2.items||!d2.items.length) continue;
+    const debInq2 = d2.items.filter(it=>it.dc_inq==='D'||it.dc_inq==='D/C');
+    const credInq2 = d2.items.filter(it=>it.dc_inq==='C');
+    const totMes = debInq2.reduce((s,it)=>s+(it.valor||0),0) - credInq2.reduce((s,it)=>s+(it.valor||0),0);
+    totPagoInq += totMes;
+    linhasInq += `<tr>
+      <td>${MESES[m-1]}</td>
+      ${debInq2.map(it=>`<td class="r mo">${it.tipo==='Aluguel'?fmt(it.valor||0):'—'}</td>`).join('')}
+      <td class="r mo">${fmt(debInq2.filter(it=>it.tipo!=='Aluguel').reduce((s,it)=>s+(it.valor||0),0))}</td>
+      <td class="r mo" style="color:var(--green);font-weight:500;">${fmt(totMes)}</td>
+    </tr>`;
+  }
+
+  h += `<div class="card" style="margin-top:14px;">
+    <div class="card-title">Informe de Pagamentos — Inquilino</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.8;">
+      <strong>${c.inq_nome||'—'}</strong> · CPF: ${c.inq_cpf||'—'}<br>
+      Imóvel: ${c.imovel_end||'—'} — ${c.imovel_cidade||''}${c.imovel_uf?'/'+c.imovel_uf:''}<br>
+      Ano-base: <strong>${ano}</strong>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Mês</th>
+        <th class="r">Aluguel</th>
+        <th class="r">Encargos</th>
+        <th class="r">Total pago</th>
+      </tr></thead>
+      <tbody>${linhasInq||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px;">Nenhum lançamento em '+ano+'.</td></tr>'}</tbody>
+      <tfoot><tr>
+        <td>Total anual</td>
+        <td></td>
+        <td></td>
+        <td class="r mo" style="color:var(--green);">${fmt(totPagoInq)}</td>
+      </tr></tfoot>
+    </table></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;">
+      Valores pagos pelo inquilino no ano-base ${ano} referentes à locação do imóvel.
+    </p>
+  </div>`;
+
+  document.getElementById('irPropOut').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO (GLOBAL — todos os contratos)
+// ═══════════════════════════════════════════════════════════
+function finGKey(contratoIdx, mes, ano) { return `fin_${contratoIdx}_${ano}-${String(mes).padStart(2,'0')}`; }
+function ensFKey(k){ if(!S.lancs[k]) S.lancs[k]={rec:[],pag:[]}; }
+
+function populateFinContratoFilter() {
+  const sel = document.getElementById('finG_contrato');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="todos">Todos os contratos</option>' +
+    S.contratos.map((c,i) => `<option value="${i}">${cod(i)} — ${c.imovel_end||'Sem endereço'}</option>`).join('');
+  if (atual && [...sel.options].some(o=>o.value===atual)) sel.value = atual;
+}
+
+function renderFinGlobal() {
+  populateFinContratoFilter();
+  renderFin();
+}
+
+function getFinContratosFiltro() {
+  const sel = document.getElementById('finG_contrato');
+  const val = sel ? sel.value : 'todos';
+  if (val === 'todos') return S.contratos.map((_,i)=>i);
+  return [parseInt(val)];
+}
+
+function renderFin(){
+  const mes = +document.getElementById('finG_mes').value;
+  const ano = +document.getElementById('finG_ano').value;
+  const idxs = getFinContratosFiltro();
+
+  // Agrega itens de todos os contratos filtrados para este mês/ano
+  let recAll = [];
+  let pagAll = [];
+  idxs.forEach(idx => {
+    const k = finGKey(idx, mes, ano);
+    ensFKey(k);
+    const d = S.lancs[k];
+    (d.rec||[]).forEach((it, i) => recAll.push({ ...it, _k: k, _i: i, _idx: idx }));
+    (d.pag||[]).forEach((it, i) => pagAll.push({ ...it, _k: k, _i: i, _idx: idx }));
+  });
+
+  rFinLinhas('finRec', recAll, 'rec');
+  rFinLinhas('finPag', pagAll, 'pag');
+  updateFinResumo(recAll, pagAll);
+}
+
+function rFinLinhas(cid, items, tipo){
+  const el=document.getElementById(cid);
+  if(!items||!items.length){el.innerHTML='<p style="color:var(--text3);font-size:12px;padding:8px 0;">Nenhum lançamento.</p>';return;}
+  el.innerHTML=items.map((it)=>`<div class="fin-row">
+    <select onchange="updF('${it._k}','${tipo}',${it._i},'cat',this.value)">${CATS_FIN.map(c=>`<option ${c===it.cat?'selected':''}>${c}</option>`).join('')}</select>
+    <input type="text" value="${it.desc||''}" placeholder="Descrição" onchange="updF('${it._k}','${tipo}',${it._i},'desc',this.value)"/>
+    <input type="number" value="${it.val||''}" placeholder="0,00" step="0.01" onchange="updF('${it._k}','${tipo}',${it._i},'val',this.value);renderFin()"/>
+    <input type="date" value="${it.venc||''}" onchange="updF('${it._k}','${tipo}',${it._i},'venc',this.value)"/>
+    <select onchange="updF('${it._k}','${tipo}',${it._i},'status',this.value)">
+      <option ${(it.status||'pendente')==='pendente'?'selected':''} value="pendente">Pendente</option>
+      <option ${it.status==='pago'?'selected':''} value="pago">Pago / Recebido</option>
+      <option ${it.status==='atrasado'?'selected':''} value="atrasado">Atrasado</option>
+    </select>
+    <button class="btn btn-sm btn-d" onclick="remF('${it._k}','${tipo}',${it._i})">Rem.</button>
+  </div>`).join('');
+}
+
+function addFin(tipo){
+  const mes = +document.getElementById('finG_mes').value;
+  const ano = +document.getElementById('finG_ano').value;
+  const idxs = getFinContratosFiltro();
+  // Se filtro = todos, usa o primeiro contrato disponível (ou pede pra escolher um contrato específico)
+  const idx = idxs.length === 1 ? idxs[0] : (S.contratos.length ? idxs[0] : null);
+  if (idx === null || idx === undefined) { alert('Cadastre um contrato primeiro.'); return; }
+  const k = finGKey(idx, mes, ano);
+  ensFKey(k);
+  S.lancs[k][tipo].push({cat:'Aluguel',desc:'',val:'',venc:'',status:'pendente'});
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderFin();
+}
+function remF(k,tipo,i){ ensFKey(k); S.lancs[k][tipo].splice(i,1); if (window.saveCloud) { window.saveCloud(); } else { save(); } renderFin(); }
+function updF(k,tipo,i,f,v){ ensFKey(k); S.lancs[k][tipo][i][f]=v; if (window.saveCloud) { window.saveCloud(); } else { save(); } }
+function salvarFin(){ if (window.saveCloud) { window.saveCloud(); } else { save(); } alert('Financeiro salvo!'); }
+
+function updateFinResumo(recAll, pagAll){
+  const r = (recAll||[]).reduce((s,i)=>s+(parseFloat(i.val)||0),0);
+  const p = (pagAll||[]).reduce((s,i)=>s+(parseFloat(i.val)||0),0);
+  const sl = r-p;
+  const elR = document.getElementById('finTotRec');
+  const elP = document.getElementById('finTotPag');
+  const elS = document.getElementById('finSaldo');
+  if (elR) elR.textContent=fmt(r);
+  if (elP) elP.textContent=fmt(p);
+  if (elS) { elS.textContent=fmt(sl); elS.style.color=sl>=0?'var(--green)':'var(--red)'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECIBO
+// ═══════════════════════════════════════════════════════════
+function numExtenso(v){
+  const un=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  const dz=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  const ct=['','cem','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+  function c3(n){if(n===0)return '';if(n===100)return 'cem';if(n<20)return un[n];if(n<100)return dz[Math.floor(n/10)]+(n%10?' e '+un[n%10]:'');return ct[Math.floor(n/100)]+(n%100?' e '+c3(n%100):'');}
+  const inteiro=Math.floor(v), centavos=Math.round((v-inteiro)*100);
+  let r='';
+  if(inteiro>=1000000){const m=Math.floor(inteiro/1000000);r+=c3(m)+(m===1?' milhão':' milhões')+' ';inteiro%=1000000;}
+  const int2=inteiro;
+  if(int2>=1000){const m=Math.floor(int2/1000);r+=(m===1?'mil':c3(m)+' mil')+' ';}
+  const resto=int2%1000; if(resto>0) r+=c3(resto);
+  if(!r.trim()) r='zero';
+  let ext=r.trim()+' '+(inteiro===1?'real':'reais');
+  if(centavos>0) ext+=' e '+c3(centavos)+' '+(centavos===1?'centavo':'centavos');
+  return ext.charAt(0).toUpperCase()+ext.slice(1);
+}
+
+function renderRecibo(){
+  const mes=+document.getElementById('rec_mes').value, ano=+document.getElementById('rec_ano').value;
+  const dtpag=document.getElementById('rec_dtpag').value, forma=document.getElementById('rec_forma').value;
+  const c=C(); const k=lKey(mes,ano);
+  const d=S.lancs[k]||{dInq:[],cInq:[],dProp:[],cProp:[]};
+  const alug=getAluguelVigente(c), taxa=parseFloat(c.cont_taxa_adm)||0, taxaDe=c.cont_taxa_de||'proprietaria';
+  const items = d.items || [];
+  const debInq  = items.filter(it=>it.dc_inq==='D'||it.dc_inq==='D/C');
+  const credInq = items.filter(it=>it.dc_inq==='C');
+  const total = debInq.reduce((s,it)=>s+(it.valor||0),0) - credInq.reduce((s,it)=>s+(it.valor||0),0);
+  const hoje=dtpag||new Date().toISOString().slice(0,10);
+  let h=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;max-width:700px;">
+    <div style="background:var(--accent);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><div style="font-size:10px;opacity:.6;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Recibo de Pagamento de Aluguel</div>
+      <div style="font-size:20px;font-weight:700;">${MESES[mes-1]} / ${ano}</div></div>
+      <div style="text-align:right;"><div style="font-size:11px;opacity:.6;">Total</div>
+      <div style="font-size:24px;font-weight:700;font-family:var(--mono);">${fmt(total)}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);">
+      <div style="padding:16px 22px;border-right:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;">Locador (Proprietária)</div>
+        <div style="font-size:13px;font-weight:600;">${c.prop_nome||'—'}</div>
+        <div style="font-size:12px;color:var(--text2);">CPF: ${c.prop_cpf||'—'}</div>
+      </div>
+      <div style="padding:16px 22px;">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;">Locatário (Inquilino)</div>
+        <div style="font-size:13px;font-weight:600;">${c.inq_nome||'—'}</div>
+        <div style="font-size:12px;color:var(--text2);">CPF: ${c.inq_cpf||'—'}</div>
+      </div>
+    </div>
+    <div style="padding:12px 22px;border-bottom:1px solid var(--border);background:var(--surface2);">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Imóvel</div>
+      <div style="font-size:13px;">${c.imovel_end||'—'}, ${c.imovel_cidade||''}${c.imovel_uf?' / '+c.imovel_uf:''} — CEP ${c.imovel_cep||'—'}</div>
+    </div>
+    <div style="padding:0 22px;">
+      <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <span>Aluguel — ${MESES[mes-1]}/${ano}</span><span style="font-family:var(--mono);">${fmt(alug)}</span></div>`;
+  (d.dInq||[]).forEach(it=>{if(!it.val)return;h+=`<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${it.cat}${it.desc?' — '+it.desc:''} ${it.ref?'('+it.ref+')':''}</span><span style="font-family:var(--mono);">${fmt(parseFloat(it.val)||0)}</span></div>`;});
+  if(taxaDe==='inquilino'&&taxa>0)h+=`<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Taxa de administração</span><span style="font-family:var(--mono);">${fmt(taxa)}</span></div>`;
+  (d.cInq||[]).forEach(it=>{if(!it.val)return;h+=`<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--green);"><span>Crédito: ${it.cat}${it.desc?' — '+it.desc:''}</span><span style="font-family:var(--mono);">− ${fmt(parseFloat(it.val)||0)}</span></div>`;});
+  h+=`</div>
+    <div style="display:flex;justify-content:space-between;padding:14px 22px;background:var(--surface2);border-top:2px solid var(--border);">
+      <span style="font-size:14px;font-weight:600;">TOTAL PAGO</span>
+      <span style="font-size:18px;font-weight:700;font-family:var(--mono);color:var(--accent);">${fmt(total)}</span>
+    </div>
+    <div style="padding:11px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);font-style:italic;">${numExtenso(total)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;padding:14px 22px;gap:12px;border-top:1px solid var(--border);">
+      <div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Data de pagamento</div><div style="font-size:13px;">${fmtD(hoje)}</div></div>
+      <div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Forma de pagamento</div><div style="font-size:13px;">${forma}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;padding:32px 22px 20px;gap:24px;border-top:1px solid var(--border);">
+      <div style="text-align:center;"><div style="border-top:1px solid var(--border2);padding-top:8px;font-size:12px;color:var(--text2);">Assinatura do Locador</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${c.prop_nome||'—'}</div></div>
+      <div style="text-align:center;"><div style="border-top:1px solid var(--border2);padding-top:8px;font-size:12px;color:var(--text2);">Assinatura do Locatário</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${c.inq_nome||'—'}</div></div>
+    </div>
+    <div style="padding:10px 22px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);text-align:center;">
+      Gerado em ${fmtD(new Date().toISOString().slice(0,10))} · ${c.imovel_end||''} · Contrato de locação vigente
+    </div>
+  </div>`;
+  document.getElementById('reciboOut').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════
+function openMo(id){document.getElementById(id).classList.add('open');}
+function closeMo(id){document.getElementById(id).classList.remove('open');}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+
+// ── Impressão de extratos ──────────────────────────────────
+function imprimirExtrato(divId) {
+  const conteudo = document.getElementById(divId);
+  if (!conteudo || !conteudo.innerHTML.trim()) {
+    alert('Clique em "Gerar" primeiro para visualizar o extrato.');
+    return;
+  }
+  const win = window.open('', '_blank', 'width=800,height=600');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Extrato</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:#fff;padding:1.5cm 2cm;font-size:13px;color:#1a1917;}
+  /* Extrato */
+  .ext-head{background:#1a4a6b;color:#fff;border-radius:8px 8px 0 0;padding:20px 24px;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:0;}
+  .ext-head h2{font-size:16px;font-weight:600;}
+  .ext-head p{font-size:11px;opacity:.75;margin-top:3px;}
+  .ext-head *{color:#fff;}
+  .ext-body{border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;margin-bottom:16px;}
+  .ext-row{display:flex;justify-content:space-between;align-items:center;padding:9px 20px;border-bottom:1px solid #eee;font-size:13px;}
+  .ext-row:last-child{border-bottom:none;}
+  .ext-row.tot{background:#f5f5f5;font-weight:600;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .ext-row.cr{color:#2d6a2d;}
+  .ext-row.db{color:#8b2020;}
+  .ext-row.hd{background:#f5f5f5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .ext-val{font-family:'DM Mono',monospace;font-weight:500;}
+  /* Cards e tabelas do IR */
+  .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:14px;}
+  .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#999;margin-bottom:10px;}
+  .metrics-strip,.dash-metrics{display:flex;gap:10px;margin-bottom:14px;}
+  .metric{flex:1;border:1px solid #ddd;border-radius:8px;padding:12px 14px;}
+  .m-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:4px;}
+  .m-val{font-size:18px;font-weight:600;font-family:'DM Mono',monospace;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;border-bottom:1px solid #ddd;background:#f5f5f5;}
+  th.r,td.r{text-align:right;}
+  tbody td{padding:9px 10px;border-bottom:1px solid #eee;}
+  tbody td.mo{font-family:'DM Mono',monospace;}
+  tfoot td{padding:8px 10px;font-weight:600;border-top:2px solid #ddd;}
+  .tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500;}
+  .tag-rd{background:#fbeaea;color:#8b2020;}
+  p{font-size:11px;color:#999;margin-top:8px;line-height:1.5;}
+  @media print{@page{margin:1.5cm 2cm;}}
+</style>
+</head>
+<body>
+${conteudo.innerHTML}
+
+
+</body>
+</html>`);
+  win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
+}
+
+// ── Mobile Menu ───────────────────────────────────────────
+
+function toggleGarantiaValor() {
+  const sel = document.getElementById('cont_garantia');
+  const wrap = document.getElementById('garantiaValorWrap');
+  const label = document.getElementById('garantiaValorLabel');
+  if (!sel || !wrap) return;
+  const v = sel.value;
+  if (v === 'caucao' || v === 'titulo_capitalizacao') {
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.gap = '4px';
+    label.textContent = v === 'caucao' ? 'Valor da caução (R$)' : 'Valor do título (R$)';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+function toggleMenu() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+function closeMenu() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+// Close menu when nav item clicked on mobile
+document.querySelectorAll('.sb-item, .btn-new').forEach(el => {
+  el.addEventListener('click', () => {
+    if (window.innerWidth <= 768) closeMenu();
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// PARTES (Proprietários e Inquilinos)
+// ═══════════════════════════════════════════════════════════
+function novaParte(tipo, i) {
+  return {
+    tipo, seq: i+1,
+    nome:'', cpf:'', rg:'', nascimento:'', estado_civil:'',
+    email:'', tel:'', cel:'',
+    cep:'', endereco:'', cidade:'', uf:'',
+    banco:''
+  };
+}
+
+function renderPartes() {
+  const c = C();
+  if (!c._props) c._props = [novaParte('prop',0)];
+  if (!c._inqs)  c._inqs  = [novaParte('inq',0)];
+  renderParteList('propList', c._props, 'prop');
+  renderParteList('inqList',  c._inqs,  'inq');
+  syncHiddenFields(c);
+}
+
+function renderParteList(containerId, list, tipo) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = list.map((p,i) => {
+    const titulo = (tipo==='prop'?'Proprietário':'Inquilino') + ' ' + (list.length>1?(i+1):'');
+    const btnRemover = list.length>1 ? '<button class="btn btn-sm btn-d" onclick="removeParte(\''+tipo+'\','+i+')">Remover</button>' : '';
+    const bancoField = tipo==='prop' ? '<div class="parte-field"><label>Dados bancários</label><input type="text" value="'+(p.banco||'')+'" placeholder="Banco / Agência / Conta" onchange="updParte(\''+tipo+'\','+i+',\'banco\',this.value)"/></div>' : '';
+
+    let html = '<div class="parte-card">';
+    html += '<div class="parte-header"><span class="parte-title">'+titulo+'</span>'+btnRemover+'</div>';
+    html += '<div class="parte-grid">';
+    html += '<div class="parte-field"><label>Nome completo</label><input type="text" value="'+(p.nome||'')+'" placeholder="Nome completo" onchange="updParte(\''+tipo+'\','+i+',\'nome\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>CPF</label><input type="text" value="'+(p.cpf||'')+'" placeholder="000.000.000-00" maxlength="14" oninput="this.value=maskCPF(this.value);updParte(\''+tipo+'\','+i+',\'cpf\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>RG</label><input type="text" value="'+(p.rg||'')+'" placeholder="00.000.000-0" onchange="updParte(\''+tipo+'\','+i+',\'rg\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>Data de nascimento</label><input type="date" value="'+(p.nascimento||'')+'" onchange="updParte(\''+tipo+'\','+i+',\'nascimento\',this.value)"/></div>';
+    html += '</div>';
+    html += '<div class="parte-grid2">';
+    html += '<div class="parte-field"><label>E-mail</label><input type="email" value="'+(p.email||'')+'" placeholder="email@exemplo.com" onchange="updParte(\''+tipo+'\','+i+',\'email\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>Telefone</label><input type="text" value="'+(p.tel||'')+'" placeholder="(00) 0000-0000" maxlength="15" oninput="this.value=maskTel(this.value);updParte(\''+tipo+'\','+i+',\'tel\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>Celular</label><input type="text" value="'+(p.cel||'')+'" placeholder="(00) 00000-0000" maxlength="15" oninput="this.value=maskTel(this.value);updParte(\''+tipo+'\','+i+',\'cel\',this.value)"/></div>';
+    html += '</div>';
+    html += '<div class="parte-grid">';
+    html += '<div class="parte-field"><label>Endereço</label><input type="text" value="'+(p.endereco||'')+'" placeholder="Rua, número, complemento" onchange="updParte(\''+tipo+'\','+i+',\'endereco\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>CEP</label><input type="text" value="'+(p.cep||'')+'" placeholder="00000-000" maxlength="9" oninput="this.value=maskCEP(this.value);updParte(\''+tipo+'\','+i+',\'cep\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>Cidade</label><input type="text" value="'+(p.cidade||'')+'" placeholder="São Paulo" onchange="updParte(\''+tipo+'\','+i+',\'cidade\',this.value)"/></div>';
+    html += '<div class="parte-field"><label>UF</label><input type="text" value="'+(p.uf||'')+'" placeholder="SP" maxlength="2" onchange="updParte(\''+tipo+'\','+i+',\'uf\',this.value)"/></div>';
+    html += '</div>';
+    html += '<div class="parte-grid2" style="margin-bottom:0;">';
+    html += '<div class="parte-field"><label>Estado civil</label><select onchange="updParte(\''+tipo+'\','+i+',\'estado_civil\',this.value)">';
+    html += '<option value="">Selecione...</option>';
+    html += '<option value="solteiro"'+(p.estado_civil==='solteiro'?' selected':'')+'>Solteiro(a)</option>';
+    html += '<option value="casado"'+(p.estado_civil==='casado'?' selected':'')+'>Casado(a)</option>';
+    html += '<option value="divorciado"'+(p.estado_civil==='divorciado'?' selected':'')+'>Divorciado(a)</option>';
+    html += '<option value="viuvo"'+(p.estado_civil==='viuvo'?' selected':'')+'>Viúvo(a)</option>';
+    html += '<option value="uniao_estavel"'+(p.estado_civil==='uniao_estavel'?' selected':'')+'>União Estável</option>';
+    html += '</select></div>';
+    html += bancoField;
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+function addParte(tipo) {
+  const c = C();
+  if (!c._props) c._props = [novaParte('prop',0)];
+  if (!c._inqs)  c._inqs  = [novaParte('inq',0)];
+  if (tipo==='prop') c._props.push(novaParte('prop', c._props.length));
+  else               c._inqs.push(novaParte('inq',   c._inqs.length));
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderPartes();
+}
+
+function removeParte(tipo, i) {
+  const c = C();
+  if (tipo==='prop') c._props.splice(i,1);
+  else               c._inqs.splice(i,1);
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); } else { save(); }
+  renderPartes();
+}
+
+function updParte(tipo, i, field, val) {
+  const c = C();
+  if (!c._props) c._props = [novaParte('prop',0)];
+  if (!c._inqs)  c._inqs  = [novaParte('inq',0)];
+  if (tipo==='prop') c._props[i][field] = val;
+  else               c._inqs[i][field]  = val;
+  S.contratos[S.idx] = c;
+  syncHiddenFields(c);
+  if (window.saveCloud) { window.saveCloud(); }
+}
+
+function syncHiddenFields(c) {
+  // Sync first prop/inq to hidden fields and to contrato object
+  const p   = c._props && c._props[0] ? c._props[0] : {};
+  const inq = c._inqs  && c._inqs[0]  ? c._inqs[0]  : {};
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('prop_nome', p.nome); set('prop_cpf', p.cpf);
+  set('prop_email', p.email); set('prop_tel', p.tel||p.cel);
+  set('prop_banco', p.banco);
+  set('inq_nome', inq.nome); set('inq_cpf', inq.cpf);
+  set('inq_email', inq.email); set('inq_tel', inq.tel||inq.cel);
+  // Always update contrato fields for extrato/recibo/IR use
+  c.prop_nome  = p.nome   || c.prop_nome  || '';
+  c.prop_cpf   = p.cpf    || c.prop_cpf   || '';
+  c.prop_banco = p.banco  || c.prop_banco || '';
+  c.prop_tel   = p.tel    || p.cel || c.prop_tel || '';
+  c.inq_nome   = inq.nome || c.inq_nome   || '';
+  c.inq_cpf    = inq.cpf  || c.inq_cpf    || '';
+  c.inq_tel    = inq.tel  || inq.cel || c.inq_tel || '';
+}
+
+// Call syncHiddenFields when loading contract to ensure fields are populated
+function syncFromContrato(c) {
+  // If _props/_inqs not set yet, use legacy fields
+  if (!c._props || !c._props[0] || !c._props[0].nome) {
+    if (c.prop_nome) {
+      c._props = [{
+        nome: c.prop_nome, cpf: c.prop_cpf||'', email: c.prop_email||'',
+        tel: c.prop_tel||'', cel:'', banco: c.prop_banco||'',
+        rg:'', nascimento:'', estado_civil:'', cep:'', endereco:'', cidade:'', uf:''
+      }];
+    }
+  }
+  if (!c._inqs || !c._inqs[0] || !c._inqs[0].nome) {
+    if (c.inq_nome) {
+      c._inqs = [{
+        nome: c.inq_nome, cpf: c.inq_cpf||'', email: c.inq_email||'',
+        tel: c.inq_tel||'', cel:'',
+        rg:'', nascimento:'', estado_civil:'', cep:'', endereco:'', cidade:'', uf:''
+      }];
+    }
+  }
+  syncHiddenFields(c);
+}
+
+function salvarPartes() {
+  const c = C();
+  syncHiddenFields(c);
+  S.contratos[S.idx] = c;
+  if (window.saveCloud) { window.saveCloud(); }
+  else { save(); }
+  alert('Dados salvos!');
+}
+
+
+function salvarImovel() {
+  // Compose imovel_end from parts
+  const rua    = document.getElementById('imovel_rua')?.value || '';
+  const num    = document.getElementById('imovel_num')?.value || '';
+  const apto   = document.getElementById('imovel_apto')?.value || '';
+  const bairro = document.getElementById('imovel_bairro')?.value || '';
+  const cidade = document.getElementById('imovel_cidade')?.value || '';
+  const uf     = document.getElementById('imovel_uf')?.value || '';
+  let end = rua;
+  if (num) end += ', ' + num;
+  if (apto) end += ' - ' + apto;
+  if (bairro) end += ' - ' + bairro;
+  const el = document.getElementById('imovel_end');
+  if (el) el.value = end;
+  salvarContrato();
+}
+
+function preencherCamposImovel(c) {
+  // Fill split fields from imovel_end if new fields are empty
+  if (c.imovel_rua) {
+    const setV = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+    setV('imovel_rua', c.imovel_rua);
+    setV('imovel_num', c.imovel_num);
+    setV('imovel_apto', c.imovel_apto);
+    setV('imovel_bairro', c.imovel_bairro);
+  }
+}
+
+function populateYears(){
+  const cur=new Date().getFullYear();
+  ['ei_ano','ep_ano','ir_ano','finG_ano','rec_ano'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML='';
+    for(let y=cur+2;y>=2020;y--){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===cur)o.selected=true;el.appendChild(o);}
+  });
+  const m=new Date().getMonth()+1;
+  ['lanc_mes','ei_mes','ep_mes','finG_mes','rec_mes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=m;});
+}
+
+function applyMasks(){
+  [['prop_cpf',maskCPF],['inq_cpf',maskCPF],['prop_tel',maskTel],['inq_tel',maskTel],['imovel_cep',maskCEP]].forEach(([id,fn])=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input',function(){this.value=fn(this.value);});
+  });
+}
+
+function init(){
+  populateYears();
+  applyMasks();
+  // Pré-carregar Angela se banco vazio
+  if(!S.contratos.length){
+    const c={
+      prop_nome:'Angela Aparecida da Silva Franciosi',prop_cpf:'040.486.501-14',prop_email:'',prop_tel:'',prop_banco:'',
+      inq_nome:'Marcos Thulyo Torreão Tavares',inq_cpf:'066.733.584-67',inq_email:'',inq_tel:'',
+      imovel_end:'Rua Nhuguaçu, 65 - apto. 74 - Campo Belo',imovel_cep:'04625-000',imovel_cidade:'São Paulo',imovel_uf:'SP',imovel_tipo:'Apartamento',imovel_mat:'',
+      cont_inicio:'2025-03-01',cont_dur:'30',cont_aluguel:'5500',cont_venc:'10',cont_indice:'IGPM',
+      cont_taxa_adm:'200',cont_taxa_de:'proprietaria',cont_regime:'vencido',cont_primeiro_aluguel:'2025-04-01',cont_obs:'',
+      cont_assinatura:'2025-03-01',cont_permanencia:'12',cont_finalidade:'residencial',cont_garantia:'',
+      cont_seg_vigencia:'',cont_seg_seguradora:'',
+      _fimIso:'2027-09-02'
+    };
+    S.contratos.push(c); S.idx=0;
+    for(let m=4;m<=12;m++){
+      const k=lKey(m,2025);
+      S.lancs[k]={dInq:[],cInq:[],dProp:[{cat:'Taxa de administração',desc:'',val:'200',ref:MESES[m-1]+'/2025'},{cat:'Condomínio ordinário',desc:'',val:'81.32',ref:MESES[m-1]+'/2025'}],cProp:[]};
+    }
+    save();
+  }
+  renderDashboard();
+}
+
+init();
+
+// ═══════════════════════════════════════════════════════════
+// FIREBASE
+// ═══════════════════════════════════════════════════════════
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDSX4zvuCFDjC6XsL1xuHx-lDv6i8hzTl0",
+  authDomain: "gestao-alugueis-c2535.firebaseapp.com",
+  projectId: "gestao-alugueis-c2535",
+  storageBucket: "gestao-alugueis-c2535.firebasestorage.app",
+  messagingSenderId: "702989353731",
+  appId: "1:702989353731:web:067dee3cde7193240f5f36"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const auth = getAuth(app);
+window._cloudReady = false;
+
+// ── Salvar/Carregar no Firestore ───────────────────────────
+async function fbSave(uid) {
+  try {
+    await setDoc(doc(db, 'usuarios', uid), {
+      contratos: JSON.stringify(S.contratos),
+      lancs: JSON.stringify(S.lancs),
+      updatedAt: new Date().toISOString()
+    });
+    showToast('Dados salvos na nuvem ✓');
+  } catch(e) { showToast('Erro ao salvar: ' + e.message, true); }
+}
+
+async function fbLoad(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      S.contratos = JSON.parse(d.contratos || '[]');
+      S.lancs     = JSON.parse(d.lancs || '{}');
+      S.idx = S.contratos.length > 0 ? 0 : null;
+      renderDashboard();
+      showToast('Dados carregados da nuvem ✓');
+    }
+  } catch(e) { showToast('Erro ao carregar: ' + e.message, true); }
+}
+
+// Override save() para salvar local + nuvem
+const _savOrig = save;
+window.saveCloud = async function() {
+  localStorage.setItem('aluguel_v4', JSON.stringify(S));
+  const u = auth.currentUser;
+  if (u) {
+    await fbSave(u.uid);
+  } else {
+    showToast('Aviso: faça login para salvar na nuvem', true);
+  }
+};
+
+// Sobrescrever salvarContrato, salvarLanc, salvarFin
+const origSalvarContrato = window.salvarContrato;
+window.salvarContrato = async function() {
+  const c={};
+  CAMPOS.forEach(f=>{const el=document.getElementById(f);if(el) c[f]=el.value;});
+  c._fimIso=document.getElementById('cont_fim').dataset.iso||'';
+  if(!c.prop_nome&&!c.imovel_end){alert('Preencha o nome da proprietária e o endereço.');return;}
+  syncHiddenFields(c); if(S.idx!==null){S.contratos[S.idx]=c;}
+  else{S.contratos.push(c);S.idx=S.contratos.length-1;document.getElementById('btnExc').style.display='inline-flex';}
+  await window.saveCloud();
+  showToast('Contrato salvo!');
+};
+
+window.salvarLanc = async function() { await window.saveCloud(); showToast('Lançamentos salvos!'); };
+window.salvarFin  = async function() { await window.saveCloud(); showToast('Financeiro salvo!'); };
+
+window.confirmarExcluir = async function() {
+  if(S.idx===null)return;
+  const p=S.idx+'_',fp='fin_'+S.idx+'_';
+  Object.keys(S.lancs).filter(k=>k.startsWith(p)||k.startsWith(fp)).forEach(k=>delete S.lancs[k]);
+  S.contratos.splice(S.idx,1);S.idx=null;
+  await window.saveCloud();
+  closeMo('moExc');showPage('dashboard');
+};
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg, err=false) {
+  let t = document.getElementById('toast');
+  if (!t) { t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:${err?'#8b2020':'#1a4a6b'};color:#fff;padding:10px 20px;border-radius:8px;
+    font-size:13px;font-family:'DM Sans',sans-serif;z-index:9999;transition:opacity .3s;opacity:1;`;
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>{ t.style.opacity='0'; },2500);
+}
+
+// ── Auth UI ────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'flex';
+}
+function showApp() {
+  document.getElementById('appWrap').style.display = 'flex';
+  document.getElementById('loginWrap').style.display = 'none';
+}
+
+document.getElementById('btnLogin').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const err   = document.getElementById('loginErro');
+  err.textContent = '';
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+  } catch(e) {
+    err.textContent = 'E-mail ou senha incorretos.';
+  }
+});
+
+document.getElementById('btnCadastro').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const err   = document.getElementById('loginErro');
+  err.textContent = '';
+  if (!email || senha.length < 6) { err.textContent = 'Preencha e-mail e senha (mín. 6 caracteres).'; return; }
+  try {
+    await createUserWithEmailAndPassword(auth, email, senha);
+  } catch(e) {
+    if (e.code === 'auth/email-already-in-use') err.textContent = 'E-mail já cadastrado. Faça login.';
+    else err.textContent = 'Erro: ' + e.message;
+  }
+});
+
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await signOut(auth);
+});
+
+// ── Auth state ─────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  window._cloudReady = true;
+  if (user) {
+    document.getElementById('userEmail').textContent = user.email;
+    showApp();
+    await fbLoad(user.uid);
+  } else {
+    showLogin();
+  }
+});
+</script>
+
+
+<script>
+var irTabAtivo='prop';
+function showIRTab(tab){
+  irTabAtivo=tab;
+  var bP=document.getElementById('irTabProp'),bI=document.getElementById('irTabInq');
+  if(bP){bP.style.background=tab==='prop'?'var(--accent)':'';bP.style.color=tab==='prop'?'#fff':'var(--text)';bP.style.borderColor=tab==='prop'?'var(--accent)':'var(--border2)';}
+  if(bI){bI.style.background=tab==='inq'?'var(--accent)':'';bI.style.color=tab==='inq'?'#fff':'var(--text)';bI.style.borderColor=tab==='inq'?'var(--accent)':'var(--border2)';}
+  var oP=document.getElementById('irPropOut'),oI=document.getElementById('irInqOut');
+  if(oP)oP.style.display=tab==='prop'?'block':'none';
+  if(oI)oI.style.display=tab==='inq'?'block':'none';
+}
+function gerarIRAtivo(){if(irTabAtivo==='prop')renderIR();else renderIRInq();}
+function imprimirIRAtivo(){imprimirExtrato(irTabAtivo==='prop'?'irPropOut':'irInqOut');}
+function renderIRInq(){
+  var ano=+document.getElementById('ir_ano').value;
+  var c=C();
+  var totPago=0,totAlug=0,totEnc=0,linhas='';
+  for(var m=1;m<=12;m++){
+    var k2=lKey(m,ano),d2=S.lancs[k2];
+    if(!d2||!d2.items||!d2.items.length)continue;
+    var debInq=d2.items.filter(function(it){return it.dc_inq==='D'||it.dc_inq==='D/C';});
+    var credInq=d2.items.filter(function(it){return it.dc_inq==='C';});
+    var alugMes=debInq.filter(function(it){return it.tipo==='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var encMes=debInq.filter(function(it){return it.tipo!=='Aluguel';}).reduce(function(s,it){return s+(it.valor||0);},0);
+    var credMes=credInq.reduce(function(s,it){return s+(it.valor||0);},0);
+    var totMes=alugMes+encMes-credMes;
+    if(!totMes&&!alugMes)continue;
+    totAlug+=alugMes;totEnc+=encMes;totPago+=totMes;
+    linhas+='<tr><td>'+MESES[m-1]+'</td>'
+      +'<td class="r mo">'+fmt(alugMes)+'</td>'
+      +'<td class="r mo">'+fmt(encMes)+'</td>'
+      +'<td class="r mo" style="color:var(--green);">'+(credMes?'- '+fmt(credMes):'--')+'</td>'
+      +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totMes)+'</td></tr>';
+  }
+  var tbody=linhas||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Nenhum lancamento em '+ano+'.</td></tr>';
+  var h='<div class="card" style="margin-bottom:14px;">'
+    +'<div class="card-title">Inquilino -- Ano-base '+ano+'</div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:2;">'
+    +'<strong>'+(c.inq_nome||'--')+'</strong> - CPF: '+(c.inq_cpf||'--')+'<br>'
+    +'Imovel: '+(c.imovel_end||'--')+' - '+(c.imovel_cidade||'')+(c.imovel_uf?'/'+c.imovel_uf:'')+'<br>'
+    +'Proprietaria: '+(c.prop_nome||'--')+' - CPF: '+(c.prop_cpf||'--')
+    +'</div></div>'
+    +'<div class="metrics-strip" style="margin-bottom:14px;">'
+    +'<div class="metric"><div class="m-label">Total aluguel pago</div><div class="m-val ac" style="font-size:18px;">'+fmt(totAlug)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total encargos pagos</div><div class="m-val" style="font-size:18px;">'+fmt(totEnc)+'</div></div>'
+    +'<div class="metric"><div class="m-label">Total geral pago</div><div class="m-val gn" style="font-size:18px;">'+fmt(totPago)+'</div></div>'
+    +'</div>'
+    +'<div class="card"><div class="card-title">Detalhamento mensal</div><div class="tw"><table>'
+    +'<thead><tr><th>Mes</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Creditos</th><th class="r">Total pago</th></tr></thead>'
+    +'<tbody>'+tbody+'</tbody>'
+    +'<tfoot><tr><td>Total</td><td class="r mo">'+fmt(totAlug)+'</td><td class="r mo">'+fmt(totEnc)+'</td><td></td>'
+    +'<td class="r mo" style="color:var(--accent);font-weight:600;">'+fmt(totPago)+'</td></tr></tfoot>'
+    +'</table></div>'
+    +'<p style="font-size:11px;color:var(--text3);margin-top:10px;">Valores pagos pelo inquilino no ano-base '+ano+'. Comprovante para fins fiscais.</p>'
+    +'</div>';
+  document.getElementById('irInqOut').innerHTML=h;
+}
+</script>
+</body>
+</html>
